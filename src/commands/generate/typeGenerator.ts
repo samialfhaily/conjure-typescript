@@ -119,13 +119,16 @@ export async function generateEnum(definition: IEnumDefinition, simpleAst: Simpl
     const sourceFile = simpleAst.createSourceFile(definition.typeName);
 
     if (definition.values.length > 0) {
-        const typeAliases = definition.values.map<TypeAliasDeclarationStructure>(enumValue => ({
-            kind: StructureKind.TypeAlias,
-            isExported: true,
-            name: enumValue.value,
-            type: doubleQuote(enumValue.value),
-            docs: addDeprecatedToDocs(enumValue),
-        }));
+        const typeAliases = definition.values.map<TypeAliasDeclarationStructure>(enumValue => {
+            const docs = addDeprecatedToDocs(enumValue);
+            return {
+                kind: StructureKind.TypeAlias,
+                isExported: true,
+                name: enumValue.value,
+                type: doubleQuote(enumValue.value),
+                docs: docs != null ? [docs] : undefined,
+            };
+        });
         typeAliases[typeAliases.length - 1].trailingTrivia = `\n\n`;
         const variableDeclarations = definition.values.map<VariableStatementStructure>(enumValue => ({
             kind: StructureKind.VariableStatement,
@@ -206,13 +209,14 @@ export async function generateObject(
     const imports: ImportDeclarationStructure[] = [];
     definition.fields.forEach(fieldDefinition => {
         const fieldType = IType.visit(fieldDefinition.type, tsTypeVisitor);
+        const docs = addDeprecatedToDocs(fieldDefinition);
 
         const property: PropertySignatureStructure = {
             kind: StructureKind.PropertySignature,
             hasQuestionToken: IType.isOptional(fieldDefinition.type),
             name: singleQuote(fieldDefinition.fieldName),
             type: fieldType,
-            docs: addDeprecatedToDocs(fieldDefinition),
+            docs: docs != null ? [docs] : undefined,
             isReadonly: typeGenerationFlags.readonlyInterfaces,
         };
 
@@ -230,7 +234,7 @@ export async function generateObject(
         name: "I" + definition.typeName.name,
         properties,
     });
-    if (definition.docs !== undefined && definition.docs !== null) {
+    if (definition.docs != null && definition.docs != null) {
         iface.addJsDoc({ description: definition.docs });
     }
 
@@ -335,10 +339,11 @@ function processUnionMembers(
         imports.push(...IType.visit(fieldDefinition.type, importsVisitor));
 
         const interfaceName = `${unionTsType}_${uppercase(memberName)}`;
+        const docs = addDeprecatedToDocs(fieldDefinition);
 
         memberInterfaces.push({
             kind: StructureKind.Interface,
-            docs: addDeprecatedToDocs(fieldDefinition),
+            docs: docs != null ? [docs] : undefined,
             isExported: true,
             name: interfaceName,
             properties: [
@@ -387,10 +392,7 @@ function processUnionMembers(
             ],
             returnType: interfaceName,
             // deprecate creation of deprecated types
-            docs:
-                fieldDefinition.deprecated !== null && fieldDefinition.deprecated !== undefined
-                    ? [`@deprecated ${fieldDefinition.deprecated}`]
-                    : undefined,
+            docs: fieldDefinition.deprecated != null ? [`@deprecated ${fieldDefinition.deprecated}`] : undefined,
         });
 
         visitorProperties.push({

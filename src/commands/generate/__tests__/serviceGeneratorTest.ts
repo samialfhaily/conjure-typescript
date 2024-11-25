@@ -53,6 +53,7 @@ describe("serviceGenerator", () => {
                         markers: [],
                         returns: { primitive: PrimitiveType.INTEGER, type: "primitive" },
                         tags: [],
+                        errors: [],
                     },
                 ],
                 serviceName: { name: "PrimitiveService", package: "com.palantir.services" },
@@ -83,6 +84,7 @@ describe("serviceGenerator", () => {
                         httpPath: "/foo",
                         markers: [],
                         tags: [],
+                        errors: [],
                     },
                 ],
                 serviceName: { name: "ServiceWithSafelongHeader", package: "com.palantir.services" },
@@ -105,6 +107,7 @@ describe("serviceGenerator", () => {
                         httpPath: "/bar",
                         markers: [],
                         tags: [],
+                        errors: [],
                     },
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
@@ -132,6 +135,7 @@ describe("serviceGenerator", () => {
                         markers: [],
                         returns: { primitive: PrimitiveType.BINARY, type: "primitive" },
                         tags: [],
+                        errors: [],
                     },
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
@@ -166,6 +170,7 @@ describe("serviceGenerator", () => {
                         markers: [],
                         returns: { primitive: PrimitiveType.BINARY, type: "primitive" },
                         tags: [],
+                        errors: [],
                     },
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
@@ -203,6 +208,7 @@ describe("serviceGenerator", () => {
                         markers: [],
                         returns: foreignObject.reference,
                         tags: [],
+                        errors: [],
                     },
                 ],
                 serviceName: {
@@ -273,6 +279,7 @@ describe("serviceGenerator", () => {
                         httpPath: "/foo/{path}",
                         markers: [],
                         tags: [],
+                        errors: [],
                     },
                 ],
                 serviceName: { name: "ParamTypeService", package: "com.palantir.services" },
@@ -316,6 +323,7 @@ describe("serviceGenerator", () => {
                         httpPath: "/{param2}/{param1}",
                         markers: [],
                         tags: [],
+                        errors: [],
                     },
                 ],
                 serviceName: { name: "OutOfOrderPathService", package: "com.palantir.services" },
@@ -350,6 +358,7 @@ describe("serviceGenerator", () => {
                         httpPath: "/foo",
                         markers: [],
                         tags: [],
+                        errors: [],
                     },
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
@@ -396,6 +405,7 @@ describe("serviceGenerator", () => {
                             httpPath: "/foo",
                             markers: [],
                             tags: [],
+                            errors: [],
                         },
                     ],
                     serviceName: { name: "MyService", package: "com.palantir.services" },
@@ -430,6 +440,7 @@ describe("serviceGenerator", () => {
                             httpPath: "/foo",
                             markers: [],
                             tags: [],
+                            errors: [],
                         },
                     ],
                     serviceName: { name: "MyService", package: "com.palantir.services" },
@@ -464,6 +475,7 @@ describe("serviceGenerator", () => {
                             httpPath: "/foo",
                             markers: [],
                             tags: [],
+                            errors: [],
                         },
                     ],
                     serviceName: { name: "MyService", package: "com.palantir.services" },
@@ -490,6 +502,7 @@ describe("serviceGenerator", () => {
                         httpPath: "/foo",
                         markers: [],
                         tags: [],
+                        errors: [],
                     },
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
@@ -516,7 +529,7 @@ export interface IMyService {
         );
     });
 
-    it("emits endpoint with incubating doc", async () => {
+    it("emits endpoint with incubating docs", async () => {
         await generateService(
             {
                 endpoints: [
@@ -527,6 +540,7 @@ export interface IMyService {
                         httpMethod: HttpMethod.GET,
                         httpPath: "/foo",
                         markers: [],
+                        errors: [],
                     },
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
@@ -547,6 +561,102 @@ export interface IMyService {
         );
     });
 
+    it("emits endpoint with error docs", async () => {
+        await generateService(
+            {
+                docs: "service level docs",
+                endpoints: [
+                    {
+                        docs: "endpoint level docs",
+                        args: [],
+                        tags: [],
+                        endpointName: "foo",
+                        httpMethod: HttpMethod.GET,
+                        httpPath: "/foo",
+                        markers: [],
+                        errors: [
+                            {
+                                error: { name: "MyError1", namespace: "MyNamespace", package: "com.palantir.services" },
+                                docs: "MyError1 documentation",
+                            },
+                            {
+                                error: { name: "MyError2", namespace: "MyNamespace", package: "com.palantir.services" },
+                                docs: "MyError2 documentation",
+                            },
+                        ],
+                    },
+                ],
+                serviceName: { name: "MyService", package: "com.palantir.services" },
+            },
+            new Map(),
+            simpleAst,
+            DEFAULT_TYPE_GENERATION_FLAGS,
+        );
+        const outFile = path.join(outDir, "services/myService.ts");
+        const contents = fs.readFileSync(outFile, "utf8");
+        expect(contents).toContain(
+            `/** service level docs */
+export interface IMyService {
+    /**
+     * endpoint level docs
+     * @throws {MyError1} MyError1 documentation
+     * @throws {MyError2} MyError2 documentation
+     */
+    foo(): Promise<void>;
+}
+`,
+        );
+    });
+
+    it("emits service interfaces with error incubating docs", async () => {
+        await generateService(
+            {
+                docs: "service level docs",
+                endpoints: [
+                    {
+                        args: [],
+                        docs: "endpoint level docs",
+                        endpointName: "foo",
+                        httpMethod: HttpMethod.GET,
+                        httpPath: "/foo",
+                        markers: [],
+                        tags: ["incubating"],
+                        errors: [
+                            {
+                                error: { name: "MyError", namespace: "MyNamespace", package: "com.palantir.services" },
+                                docs: "MyError documentation",
+                            },
+                        ],
+                    },
+                ],
+                serviceName: { name: "MyService", package: "com.palantir.services" },
+            },
+            new Map(),
+            simpleAst,
+            DEFAULT_TYPE_GENERATION_FLAGS,
+        );
+        const outFile = path.join(outDir, "services/myService.ts");
+        const contents = fs.readFileSync(outFile, "utf8");
+        expect(contents).toContain(
+            `/** service level docs */
+export interface IMyService {
+    /**
+     * endpoint level docs
+     * @incubating
+     * @throws {MyError} MyError documentation
+     */
+    foo(): Promise<void>;
+}
+`,
+        );
+
+        expect(contents).not.toContain(
+            `
+          /** endpoint level docs */
+          foo(): Promise<void> {`,
+        );
+    });
+
     it("emits endpoint with incubating and deprecated docs", async () => {
         await generateService(
             {
@@ -559,6 +669,7 @@ export interface IMyService {
                         httpMethod: HttpMethod.GET,
                         httpPath: "/foo",
                         markers: [],
+                        errors: [],
                     },
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
@@ -612,6 +723,7 @@ export interface IMyService {
                         httpPath: "/foo",
                         markers: [],
                         tags: [],
+                        errors: [],
                     },
                 ],
                 serviceName: { name: "OptionalService", package: "com.palantir.services" },

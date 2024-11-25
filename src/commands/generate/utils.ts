@@ -16,6 +16,7 @@
  */
 import {
     IEndpointDefinition,
+    IEndpointError,
     IEnumValueDefinition,
     IFieldDefinition,
     IType,
@@ -101,29 +102,47 @@ const strictModeReservedKeywords = new Set([
 ]);
 
 type DeprecatableDefinitions = IFieldDefinition | IEnumValueDefinition | IEndpointDefinition;
-export function addDeprecatedToDocs<T extends DeprecatableDefinitions>(typeDefintion: T): string[] | undefined {
-    if (typeDefintion.deprecated !== undefined && typeDefintion.deprecated !== null) {
-        if (typeDefintion.docs !== undefined && typeDefintion.docs !== null) {
+
+export function addDeprecatedToDocs<T extends DeprecatableDefinitions>(typeDefintion: T): string | undefined {
+    if (typeDefintion.deprecated != null && typeDefintion.deprecated != null) {
+        if (typeDefintion.docs != null && typeDefintion.docs != null) {
             // Do not add deprecated JSDoc if already exists
             if (typeDefintion.docs.indexOf("@deprecated") === -1) {
-                return [typeDefintion.docs + `\n@deprecated ${typeDefintion.deprecated}`];
+                return `${typeDefintion.docs}\n@deprecated ${typeDefintion.deprecated}`;
             }
         } else {
-            return [`@deprecated ${typeDefintion.deprecated}`];
+            return `@deprecated ${typeDefintion.deprecated}`;
         }
     }
-    return typeDefintion.docs != null ? [typeDefintion.docs] : undefined;
+    return typeDefintion.docs != null ? typeDefintion.docs : undefined;
 }
 
-export function addIncubatingDocs(
+export function addIncubatingToDocs(
     endpointDefinition: IEndpointDefinition,
-    existingDocs: string[] | undefined,
-): string[] | undefined {
-    if (endpointDefinition.tags !== undefined && endpointDefinition.tags.indexOf("incubating") >= 0) {
-        if (existingDocs === undefined) {
-            return [`@incubating`];
+    existingDocs: string | undefined,
+): string | undefined {
+    if (endpointDefinition.tags != null && endpointDefinition.tags.indexOf("incubating") >= 0) {
+        if (existingDocs == null) {
+            return "@incubating";
         } else {
-            return [existingDocs + `\n@incubating`];
+            return `${existingDocs}\n@incubating`;
+        }
+    }
+    return existingDocs;
+}
+
+export function addErrorsToDocs(
+    endpointDefinition: IEndpointDefinition,
+    existingDocs: string | undefined,
+): string | undefined {
+    if (endpointDefinition.errors != null && endpointDefinition.errors.length > 0) {
+        if (existingDocs != null) {
+            const formattedErrors = endpointDefinition.errors
+                .map(error => `@throws ${formattedEndpointError(error)}`)
+                .join("\n");
+            return `${existingDocs}\n${formattedErrors}`;
+        } else {
+            return endpointDefinition.errors.map(error => `@throws ${formattedEndpointError(error)}`).join("\n");
         }
     }
     return existingDocs;
@@ -138,4 +157,12 @@ const NON_FLAVORIZABLE_TYPES = new Set<PrimitiveType>([
 
 export function isFlavorizable(type: IType, flavorizedAliases: boolean): boolean {
     return flavorizedAliases && IType.isPrimitive(type) && !NON_FLAVORIZABLE_TYPES.has(type.primitive);
+}
+
+function formattedEndpointError(errorDefinition: IEndpointError): string {
+    let formattedString = `{${errorDefinition.error.name}}`;
+    if (errorDefinition.docs != null && errorDefinition.docs != null) {
+        formattedString += ` ${errorDefinition.docs}`;
+    }
+    return formattedString;
 }
