@@ -149,7 +149,7 @@ export function generateService(
             docs: docsWithThrownErrors != null ? [docsWithThrownErrors] : undefined,
         });
 
-        // Generate the *OrError methods
+        // Generate the orError methods
         endpointDefinition.errors?.forEach(error => {
             imports.push(
                 ...IType.visit(
