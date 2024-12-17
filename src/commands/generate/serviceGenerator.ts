@@ -46,14 +46,25 @@ import { TsReturnTypeVisitor } from "./tsReturnTypeVisitor";
 import { ITypeGenerationFlags } from "./typeGenerationFlags";
 import { addDeprecatedToDocs, addErrorsToDocs, addIncubatingToDocs, CONJURE_CLIENT } from "./utils";
 
-/** Type used in the generation of the service class. Expected to be provided by conjure-client */
+/** Types used in the generation of the service class. Expected to be provided by conjure-client */
 const HTTP_API_BRIDGE_TYPE = "IHttpApiBridge";
+const RESULT_TYPE = "Result";
+const SUCCESS_TYPE = "Success";
+const FAILURE_TYPE = "Failure";
+
 /** Variable name used in the generation of the service class. */
 const BRIDGE = "bridge";
-const HTTP_API_BRIDGE_IMPORT: ImportDeclarationStructure = {
+
+/** Default imports used in the generation of the service class. */
+const DEFAULT_CONJURE_CLIENT_IMPORTS: ImportDeclarationStructure = {
     kind: StructureKind.ImportDeclaration,
     moduleSpecifier: CONJURE_CLIENT,
-    namedImports: [{ name: HTTP_API_BRIDGE_TYPE }],
+    namedImports: [{ name: HTTP_API_BRIDGE_TYPE }, { name: RESULT_TYPE }, { name: SUCCESS_TYPE }],
+};
+const FAILURE_IMPORT: ImportDeclarationStructure = {
+    kind: StructureKind.ImportDeclaration,
+    moduleSpecifier: CONJURE_CLIENT,
+    namedImports: [{ name: FAILURE_TYPE }],
 };
 
 const UNDEFINED_CONSTANT = "__undefined";
@@ -74,15 +85,17 @@ export function generateService(
     );
     const importsVisitor = new ImportsVisitor(knownTypes, definition.serviceName, typeGenerationFlags);
     const mediaTypeVisitor = new MediaTypeVisitor(knownTypes);
-
     const endpointSignatures: MethodSignatureStructure[] = [];
     const endpointImplementations: MethodDeclarationStructure[] = [];
-    const imports: ImportDeclarationStructure[] = [HTTP_API_BRIDGE_IMPORT];
+    const imports: ImportDeclarationStructure[] = [DEFAULT_CONJURE_CLIENT_IMPORTS];
+    let throwsAtLeastOneError = false;
+
     sourceFile.addVariableStatement({
         declarationKind: VariableDeclarationKind.Const,
         docs: ["Constant reference to `undefined` that we expect to get minified and therefore reduce total code size"],
         declarations: [{ name: UNDEFINED_CONSTANT, type: "undefined", initializer: "undefined" }],
     });
+
     definition.endpoints.forEach(endpointDefinition => {
         const parameters: ParameterDeclarationStructure[] = endpointDefinition.args
             .sort((a, b) => {
@@ -112,31 +125,77 @@ export function generateService(
         const docsWithoutThrownErrors = addIncubatingToDocs(endpointDefinition, docs);
         const docsWithThrownErrors = addErrorsToDocs(endpointDefinition, docsWithoutThrownErrors);
 
-        generateEndpointThrowingFunction(
-            endpointDefinition,
-            docsWithThrownErrors,
-            endpointSignatures,
-            endpointImplementations,
+        // Generate the throwing methods
+        endpointSignatures.push({
+            kind: StructureKind.MethodSignature,
+            name: endpointDefinition.endpointName,
             parameters,
-            definition.serviceName.name,
-            mediaTypeVisitor,
-            returnTsType,
-        );
-        generateEndpointOrErrorFunction(
-            endpointDefinition,
-            docsWithoutThrownErrors,
-            endpointSignatures,
-            endpointImplementations,
+            returnType: `Promise<${returnTsType}>`,
+            docs: docsWithThrownErrors != null ? [docsWithThrownErrors] : undefined,
+        });
+        endpointImplementations.push({
+            kind: StructureKind.Method,
+            statements: generateEndpointThrowingBody(
+                definition.serviceName.name,
+                endpointDefinition,
+                returnTsType,
+                mediaTypeVisitor,
+            ),
+            name: endpointDefinition.endpointName,
             parameters,
-            imports,
-            importsVisitor,
-            returnTsType,
-        );
+            returnType: `Promise<${returnTsType}>`,
+            // this appears to be a no-op by ts-simple-ast, since default in typescript is public
+            scope: Scope.Public,
+            docs: docsWithThrownErrors != null ? [docsWithThrownErrors] : undefined,
+        });
+
+        // Generate the *OrError methods
+        endpointDefinition.errors?.forEach(error => {
+            imports.push(
+                ...IType.visit(
+                    {
+                        reference: {
+                            name: `${error.error.name}`,
+                            package: error.error.package,
+                        },
+                        type: "reference",
+                    },
+                    importsVisitor,
+                ),
+            );
+        });
+
+        const errorNames = endpointDefinition.errors?.map(error => `I${error.error.name}`) ?? [];
+        throwsAtLeastOneError ||= errorNames.length > 0;
+
+        if (errorNames.length == 0) {
+            errorNames.push("never");
+        }
+
+        endpointSignatures.push({
+            kind: StructureKind.MethodSignature,
+            name: `${endpointDefinition.endpointName}OrError`,
+            parameters,
+            returnType: `Promise<Result<${returnTsType}, ${errorNames.join(" | ")}>>`,
+            docs: docsWithoutThrownErrors != null ? [docsWithoutThrownErrors] : undefined,
+        });
+        endpointImplementations.push({
+            kind: StructureKind.Method,
+            statements: generateEndpointOrErrorBody(endpointDefinition, parameters, returnTsType),
+            name: `${endpointDefinition.endpointName}OrError`,
+            parameters,
+            returnType: `Promise<Result<${returnTsType}, ${errorNames.join(" | ")}>>`,
+            // this appears to be a no-op by ts-simple-ast, since default in typescript is public
+            scope: Scope.Public,
+            docs: docsWithoutThrownErrors != null ? [docsWithoutThrownErrors] : undefined,
+        });
     });
 
-    if (imports.length !== 0) {
-        sourceFile.addImportDeclarations(sortImports(imports));
+    if (throwsAtLeastOneError) {
+        imports.push(FAILURE_IMPORT);
     }
+
+    sourceFile.addImportDeclarations(sortImports(imports));
 
     const iface = sourceFile.addInterface({
         isExported: true,
@@ -166,88 +225,6 @@ export function generateService(
 
     sourceFile.formatText();
     return sourceFile.save();
-}
-
-function generateEndpointThrowingFunction(
-    endpointDefinition: IEndpointDefinition,
-    docs: string | undefined,
-    endpointSignatures: MethodSignatureStructure[],
-    endpointImplementations: MethodDeclarationStructure[],
-    parameters: ParameterDeclarationStructure[],
-    serviceName: string,
-    mediaTypeVisitor: ITypeVisitor<string>,
-    returnTsType: string,
-) {
-    endpointSignatures.push({
-        kind: StructureKind.MethodSignature,
-        name: endpointDefinition.endpointName,
-        parameters,
-        returnType: `Promise<${returnTsType}>`,
-        docs: docs != null ? [docs] : undefined,
-    });
-    endpointImplementations.push({
-        kind: StructureKind.Method,
-        statements: generateEndpointThrowingBody(serviceName, endpointDefinition, returnTsType, mediaTypeVisitor),
-        name: endpointDefinition.endpointName,
-        parameters,
-        returnType: `Promise<${returnTsType}>`,
-        // this appears to be a no-op by ts-simple-ast, since default in typescript is public
-        scope: Scope.Public,
-        docs: docs != null ? [docs] : undefined,
-    });
-}
-
-function generateEndpointOrErrorFunction(
-    endpointDefinition: IEndpointDefinition,
-    docs: string | undefined,
-    endpointSignatures: MethodSignatureStructure[],
-    endpointImplementations: MethodDeclarationStructure[],
-    parameters: ParameterDeclarationStructure[],
-    imports: ImportDeclarationStructure[],
-    importsVisitor: ImportsVisitor,
-    returnTsType: string,
-) {
-    endpointDefinition.errors?.forEach(error => {
-        imports.push(
-            ...IType.visit(
-                {
-                    reference: {
-                        name: `${error.error.name}`,
-                        package: error.error.package,
-                    },
-                    type: "reference",
-                },
-                importsVisitor,
-            ),
-        );
-    });
-
-    const errorNames = endpointDefinition.errors?.map(error => `I${error.error.name}`) ?? [];
-    const returnType =
-        errorNames.length === 0
-            ? `Promise<{ status: "success", response: ${returnTsType} }>`
-            : `Promise<{ status: "success", response: ${returnTsType} } | { status: "failure", error: ${errorNames.join(
-                  " | ",
-              )} }>`;
-
-    endpointSignatures.push({
-        kind: StructureKind.MethodSignature,
-        name: `${endpointDefinition.endpointName}OrError`,
-        parameters,
-        returnType,
-        docs: docs != null ? [docs] : undefined,
-    });
-    endpointImplementations.push({
-        isAsync: true,
-        kind: StructureKind.Method,
-        statements: generateEndpointOrErrorBody(endpointDefinition, parameters),
-        name: `${endpointDefinition.endpointName}OrError`,
-        parameters,
-        returnType,
-        // this appears to be a no-op by ts-simple-ast, since default in typescript is public
-        scope: Scope.Public,
-        docs: docs != null ? [docs] : undefined,
-    });
 }
 
 function generateEndpointThrowingBody(
@@ -346,26 +323,29 @@ function generateEndpointThrowingBody(
 function generateEndpointOrErrorBody(
     endpointDefinition: IEndpointDefinition,
     parameters: ParameterDeclarationStructure[],
+    returnTsType: string,
 ): (writer: CodeBlockWriter) => void {
     return writer => {
-        const wrappedMethodCall = `await this.${endpointDefinition.endpointName}(${parameters
+        const wrappedMethodCall = `this.${endpointDefinition.endpointName}(${parameters
             .map(parameter => parameter.name)
             .join(", ")})`;
 
         writer
-            .writeLine(`try {`)
-            .writeLine(`return { status: "success", response: ${wrappedMethodCall} }`)
-            .writeLine("} catch (e: any) {");
-        writer.writeLine("if (e == null || e.body == null) {").writeLine("throw e;").writeLine("}");
+            .writeLine(`return ${wrappedMethodCall}`)
+            .writeLine(`.then(response => ({ status: "success", response }) as Success<${returnTsType}> )`)
+            .writeLine(".catch((e: any) => {")
+            .writeLine("if (e == null || e.body == null) {")
+            .writeLine("throw e;")
+            .writeLine("}");
         if (endpointDefinition.errors != null) {
             for (const error of endpointDefinition.errors) {
                 writer
                     .writeLine(`if (e.body.errorName === "${error.error.namespace}:${error.error.name}") {`)
-                    .writeLine('return { "status": "failure", "error": e.body };')
+                    .writeLine(`return { "status": "failure", "error": e.body } as Failure<I${error.error.name}>;`)
                     .writeLine("}");
             }
         }
-        writer.writeLine("throw e;").write("}");
+        writer.writeLine("throw e;").writeLine("});");
     };
 }
 

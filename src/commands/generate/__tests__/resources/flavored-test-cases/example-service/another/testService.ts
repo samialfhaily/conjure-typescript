@@ -2,7 +2,7 @@ import { IBackingFileSystem } from "../product-datasets/backingFileSystem";
 import { IDataset } from "../product-datasets/dataset";
 import { IAliasedString } from "../product/aliasedString";
 import { ICreateDatasetRequest } from "../product/createDatasetRequest";
-import { IHttpApiBridge } from "conjure-client";
+import { IHttpApiBridge, Result, Success } from "conjure-client";
 
 /** Constant reference to `undefined` that we expect to get minified and therefore reduce total code size */
 const __undefined: undefined = undefined;
@@ -21,25 +21,25 @@ export interface ITestService {
      * Returns a mapping from file system id to backing file system configuration.
      *
      */
-    getFileSystemsOrError(): Promise<{ status: "success", response: { [key: string]: IBackingFileSystem } }>;
+    getFileSystemsOrError(): Promise<Result<{ [key: string]: IBackingFileSystem }, never>>;
     createDataset(request: ICreateDatasetRequest, testHeaderArg: string): Promise<IDataset>;
-    createDatasetOrError(request: ICreateDatasetRequest, testHeaderArg: string): Promise<{ status: "success", response: IDataset }>;
+    createDatasetOrError(request: ICreateDatasetRequest, testHeaderArg: string): Promise<Result<IDataset, never>>;
     getDataset(datasetRid: string): Promise<IDataset | null>;
-    getDatasetOrError(datasetRid: string): Promise<{ status: "success", response: IDataset | null }>;
+    getDatasetOrError(datasetRid: string): Promise<Result<IDataset | null, never>>;
     getRawData(datasetRid: string): Promise<ReadableStream<Uint8Array>>;
-    getRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> }>;
+    getRawDataOrError(datasetRid: string): Promise<Result<ReadableStream<Uint8Array>, never>>;
     getAliasedRawData(datasetRid: string): Promise<ReadableStream<Uint8Array>>;
-    getAliasedRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> }>;
+    getAliasedRawDataOrError(datasetRid: string): Promise<Result<ReadableStream<Uint8Array>, never>>;
     maybeGetRawData(datasetRid: string): Promise<ReadableStream<Uint8Array> | null>;
-    maybeGetRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> | null }>;
+    maybeGetRawDataOrError(datasetRid: string): Promise<Result<ReadableStream<Uint8Array> | null, never>>;
     getAliasedString(datasetRid: string): Promise<IAliasedString>;
-    getAliasedStringOrError(datasetRid: string): Promise<{ status: "success", response: IAliasedString }>;
+    getAliasedStringOrError(datasetRid: string): Promise<Result<IAliasedString, never>>;
     uploadRawData(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<void>;
-    uploadRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void }>;
+    uploadRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<Result<void, never>>;
     uploadAliasedRawData(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<void>;
-    uploadAliasedRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void }>;
+    uploadAliasedRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<Result<void, never>>;
     getBranches(datasetRid: string): Promise<Array<string>>;
-    getBranchesOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> }>;
+    getBranchesOrError(datasetRid: string): Promise<Result<Array<string>, never>>;
     /**
      * Gets all branches of this dataset.
      *
@@ -51,25 +51,25 @@ export interface ITestService {
      *
      * @deprecated use getBranches instead
      */
-    getBranchesDeprecatedOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> }>;
+    getBranchesDeprecatedOrError(datasetRid: string): Promise<Result<Array<string>, never>>;
     resolveBranch(datasetRid: string, branch: string): Promise<string | null>;
-    resolveBranchOrError(datasetRid: string, branch: string): Promise<{ status: "success", response: string | null }>;
+    resolveBranchOrError(datasetRid: string, branch: string): Promise<Result<string | null, never>>;
     testParam(datasetRid: string): Promise<string | null>;
-    testParamOrError(datasetRid: string): Promise<{ status: "success", response: string | null }>;
+    testParamOrError(datasetRid: string): Promise<Result<string | null, never>>;
     testQueryParams(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<number>;
-    testQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: number }>;
+    testQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<Result<number, never>>;
     testNoResponseQueryParams(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<void>;
-    testNoResponseQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: void }>;
+    testNoResponseQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<Result<void, never>>;
     testBoolean(): Promise<boolean>;
-    testBooleanOrError(): Promise<{ status: "success", response: boolean }>;
+    testBooleanOrError(): Promise<Result<boolean, never>>;
     testDouble(): Promise<number | "NaN">;
-    testDoubleOrError(): Promise<{ status: "success", response: number | "NaN" }>;
+    testDoubleOrError(): Promise<Result<number | "NaN", never>>;
     testInteger(): Promise<number>;
-    testIntegerOrError(): Promise<{ status: "success", response: number }>;
+    testIntegerOrError(): Promise<Result<number, never>>;
     testPostOptional(maybeString?: string | null): Promise<string | null>;
-    testPostOptionalOrError(maybeString?: string | null): Promise<{ status: "success", response: string | null }>;
+    testPostOptionalOrError(maybeString?: string | null): Promise<Result<string | null, never>>;
     testOptionalIntegerAndDouble(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<void>;
-    testOptionalIntegerAndDoubleOrError(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<{ status: "success", response: void }>;
+    testOptionalIntegerAndDoubleOrError(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<Result<void, never>>;
 }
 
 export class TestService {
@@ -99,15 +99,15 @@ export class TestService {
      * Returns a mapping from file system id to backing file system configuration.
      *
      */
-    public async getFileSystemsOrError(): Promise<{ status: "success", response: { [key: string]: IBackingFileSystem } }> {
-        try {
-            return { status: "success", response: await this.getFileSystems() }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public getFileSystemsOrError(): Promise<Result<{ [key: string]: IBackingFileSystem }, never>> {
+        return this.getFileSystems()
+            .then(response => ({ status: "success", response }) as Success<{ [key: string]: IBackingFileSystem }>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public createDataset(request: ICreateDatasetRequest, testHeaderArg: string): Promise<IDataset> {
@@ -127,15 +127,15 @@ export class TestService {
         );
     }
 
-    public async createDatasetOrError(request: ICreateDatasetRequest, testHeaderArg: string): Promise<{ status: "success", response: IDataset }> {
-        try {
-            return { status: "success", response: await this.createDataset(request, testHeaderArg) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public createDatasetOrError(request: ICreateDatasetRequest, testHeaderArg: string): Promise<Result<IDataset, never>> {
+        return this.createDataset(request, testHeaderArg)
+            .then(response => ({ status: "success", response }) as Success<IDataset>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public getDataset(datasetRid: string): Promise<IDataset | null> {
@@ -155,15 +155,15 @@ export class TestService {
         );
     }
 
-    public async getDatasetOrError(datasetRid: string): Promise<{ status: "success", response: IDataset | null }> {
-        try {
-            return { status: "success", response: await this.getDataset(datasetRid) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public getDatasetOrError(datasetRid: string): Promise<Result<IDataset | null, never>> {
+        return this.getDataset(datasetRid)
+            .then(response => ({ status: "success", response }) as Success<IDataset | null>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public getRawData(datasetRid: string): Promise<ReadableStream<Uint8Array>> {
@@ -183,15 +183,15 @@ export class TestService {
         );
     }
 
-    public async getRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> }> {
-        try {
-            return { status: "success", response: await this.getRawData(datasetRid) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public getRawDataOrError(datasetRid: string): Promise<Result<ReadableStream<Uint8Array>, never>> {
+        return this.getRawData(datasetRid)
+            .then(response => ({ status: "success", response }) as Success<ReadableStream<Uint8Array>>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public getAliasedRawData(datasetRid: string): Promise<ReadableStream<Uint8Array>> {
@@ -211,15 +211,15 @@ export class TestService {
         );
     }
 
-    public async getAliasedRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> }> {
-        try {
-            return { status: "success", response: await this.getAliasedRawData(datasetRid) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public getAliasedRawDataOrError(datasetRid: string): Promise<Result<ReadableStream<Uint8Array>, never>> {
+        return this.getAliasedRawData(datasetRid)
+            .then(response => ({ status: "success", response }) as Success<ReadableStream<Uint8Array>>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public maybeGetRawData(datasetRid: string): Promise<ReadableStream<Uint8Array> | null> {
@@ -239,15 +239,15 @@ export class TestService {
         );
     }
 
-    public async maybeGetRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> | null }> {
-        try {
-            return { status: "success", response: await this.maybeGetRawData(datasetRid) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public maybeGetRawDataOrError(datasetRid: string): Promise<Result<ReadableStream<Uint8Array> | null, never>> {
+        return this.maybeGetRawData(datasetRid)
+            .then(response => ({ status: "success", response }) as Success<ReadableStream<Uint8Array> | null>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public getAliasedString(datasetRid: string): Promise<IAliasedString> {
@@ -267,15 +267,15 @@ export class TestService {
         );
     }
 
-    public async getAliasedStringOrError(datasetRid: string): Promise<{ status: "success", response: IAliasedString }> {
-        try {
-            return { status: "success", response: await this.getAliasedString(datasetRid) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public getAliasedStringOrError(datasetRid: string): Promise<Result<IAliasedString, never>> {
+        return this.getAliasedString(datasetRid)
+            .then(response => ({ status: "success", response }) as Success<IAliasedString>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public uploadRawData(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<void> {
@@ -293,15 +293,15 @@ export class TestService {
         );
     }
 
-    public async uploadRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void }> {
-        try {
-            return { status: "success", response: await this.uploadRawData(input) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public uploadRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<Result<void, never>> {
+        return this.uploadRawData(input)
+            .then(response => ({ status: "success", response }) as Success<void>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public uploadAliasedRawData(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<void> {
@@ -319,15 +319,15 @@ export class TestService {
         );
     }
 
-    public async uploadAliasedRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void }> {
-        try {
-            return { status: "success", response: await this.uploadAliasedRawData(input) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public uploadAliasedRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<Result<void, never>> {
+        return this.uploadAliasedRawData(input)
+            .then(response => ({ status: "success", response }) as Success<void>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public getBranches(datasetRid: string): Promise<Array<string>> {
@@ -347,15 +347,15 @@ export class TestService {
         );
     }
 
-    public async getBranchesOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> }> {
-        try {
-            return { status: "success", response: await this.getBranches(datasetRid) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public getBranchesOrError(datasetRid: string): Promise<Result<Array<string>, never>> {
+        return this.getBranches(datasetRid)
+            .then(response => ({ status: "success", response }) as Success<Array<string>>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     /**
@@ -385,15 +385,15 @@ export class TestService {
      *
      * @deprecated use getBranches instead
      */
-    public async getBranchesDeprecatedOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> }> {
-        try {
-            return { status: "success", response: await this.getBranchesDeprecated(datasetRid) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public getBranchesDeprecatedOrError(datasetRid: string): Promise<Result<Array<string>, never>> {
+        return this.getBranchesDeprecated(datasetRid)
+            .then(response => ({ status: "success", response }) as Success<Array<string>>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public resolveBranch(datasetRid: string, branch: string): Promise<string | null> {
@@ -415,15 +415,15 @@ export class TestService {
         );
     }
 
-    public async resolveBranchOrError(datasetRid: string, branch: string): Promise<{ status: "success", response: string | null }> {
-        try {
-            return { status: "success", response: await this.resolveBranch(datasetRid, branch) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public resolveBranchOrError(datasetRid: string, branch: string): Promise<Result<string | null, never>> {
+        return this.resolveBranch(datasetRid, branch)
+            .then(response => ({ status: "success", response }) as Success<string | null>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public testParam(datasetRid: string): Promise<string | null> {
@@ -443,15 +443,15 @@ export class TestService {
         );
     }
 
-    public async testParamOrError(datasetRid: string): Promise<{ status: "success", response: string | null }> {
-        try {
-            return { status: "success", response: await this.testParam(datasetRid) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public testParamOrError(datasetRid: string): Promise<Result<string | null, never>> {
+        return this.testParam(datasetRid)
+            .then(response => ({ status: "success", response }) as Success<string | null>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public testQueryParams(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<number> {
@@ -479,15 +479,15 @@ export class TestService {
         );
     }
 
-    public async testQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: number }> {
-        try {
-            return { status: "success", response: await this.testQueryParams(query, something, implicit, setEnd, optionalMiddle, optionalEnd) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public testQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<Result<number, never>> {
+        return this.testQueryParams(query, something, implicit, setEnd, optionalMiddle, optionalEnd)
+            .then(response => ({ status: "success", response }) as Success<number>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public testNoResponseQueryParams(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<void> {
@@ -515,15 +515,15 @@ export class TestService {
         );
     }
 
-    public async testNoResponseQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: void }> {
-        try {
-            return { status: "success", response: await this.testNoResponseQueryParams(query, something, implicit, setEnd, optionalMiddle, optionalEnd) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public testNoResponseQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<Result<void, never>> {
+        return this.testNoResponseQueryParams(query, something, implicit, setEnd, optionalMiddle, optionalEnd)
+            .then(response => ({ status: "success", response }) as Success<void>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public testBoolean(): Promise<boolean> {
@@ -541,15 +541,15 @@ export class TestService {
         );
     }
 
-    public async testBooleanOrError(): Promise<{ status: "success", response: boolean }> {
-        try {
-            return { status: "success", response: await this.testBoolean() }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public testBooleanOrError(): Promise<Result<boolean, never>> {
+        return this.testBoolean()
+            .then(response => ({ status: "success", response }) as Success<boolean>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public testDouble(): Promise<number | "NaN"> {
@@ -567,15 +567,15 @@ export class TestService {
         );
     }
 
-    public async testDoubleOrError(): Promise<{ status: "success", response: number | "NaN" }> {
-        try {
-            return { status: "success", response: await this.testDouble() }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public testDoubleOrError(): Promise<Result<number | "NaN", never>> {
+        return this.testDouble()
+            .then(response => ({ status: "success", response }) as Success<number | "NaN">)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public testInteger(): Promise<number> {
@@ -593,15 +593,15 @@ export class TestService {
         );
     }
 
-    public async testIntegerOrError(): Promise<{ status: "success", response: number }> {
-        try {
-            return { status: "success", response: await this.testInteger() }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public testIntegerOrError(): Promise<Result<number, never>> {
+        return this.testInteger()
+            .then(response => ({ status: "success", response }) as Success<number>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public testPostOptional(maybeString?: string | null): Promise<string | null> {
@@ -619,15 +619,15 @@ export class TestService {
         );
     }
 
-    public async testPostOptionalOrError(maybeString?: string | null): Promise<{ status: "success", response: string | null }> {
-        try {
-            return { status: "success", response: await this.testPostOptional(maybeString) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public testPostOptionalOrError(maybeString?: string | null): Promise<Result<string | null, never>> {
+        return this.testPostOptional(maybeString)
+            .then(response => ({ status: "success", response }) as Success<string | null>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 
     public testOptionalIntegerAndDouble(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<void> {
@@ -649,14 +649,14 @@ export class TestService {
         );
     }
 
-    public async testOptionalIntegerAndDoubleOrError(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<{ status: "success", response: void }> {
-        try {
-            return { status: "success", response: await this.testOptionalIntegerAndDouble(maybeInteger, maybeDouble) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public testOptionalIntegerAndDoubleOrError(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<Result<void, never>> {
+        return this.testOptionalIntegerAndDouble(maybeInteger, maybeDouble)
+            .then(response => ({ status: "success", response }) as Success<void>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 }

@@ -1,11 +1,11 @@
-import { IHttpApiBridge } from "conjure-client";
+import { IHttpApiBridge, Result, Success } from "conjure-client";
 
 /** Constant reference to `undefined` that we expect to get minified and therefore reduce total code size */
 const __undefined: undefined = undefined;
 
 export interface IParamTypeService {
     foo(body: string, header: string, path: string, query: string): Promise<void>;
-    fooOrError(body: string, header: string, path: string, query: string): Promise<{ status: "success", response: void }>;
+    fooOrError(body: string, header: string, path: string, query: string): Promise<Result<void, never>>;
 }
 
 export class ParamTypeService {
@@ -33,14 +33,14 @@ export class ParamTypeService {
         );
     }
 
-    public async fooOrError(body: string, header: string, path: string, query: string): Promise<{ status: "success", response: void }> {
-        try {
-            return { status: "success", response: await this.foo(body, header, path, query) }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public fooOrError(body: string, header: string, path: string, query: string): Promise<Result<void, never>> {
+        return this.foo(body, header, path, query)
+            .then(response => ({ status: "success", response }) as Success<void>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 }

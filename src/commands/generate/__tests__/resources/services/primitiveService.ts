@@ -1,11 +1,11 @@
-import { IHttpApiBridge } from "conjure-client";
+import { IHttpApiBridge, Result, Success } from "conjure-client";
 
 /** Constant reference to `undefined` that we expect to get minified and therefore reduce total code size */
 const __undefined: undefined = undefined;
 
 export interface IPrimitiveService {
     getPrimitive(): Promise<number>;
-    getPrimitiveOrError(): Promise<{ status: "success", response: number }>;
+    getPrimitiveOrError(): Promise<Result<number, never>>;
 }
 
 export class PrimitiveService {
@@ -27,14 +27,14 @@ export class PrimitiveService {
         );
     }
 
-    public async getPrimitiveOrError(): Promise<{ status: "success", response: number }> {
-        try {
-            return { status: "success", response: await this.getPrimitive() }
-        } catch (e: any) {
-            if (e == null || e.body == null) {
+    public getPrimitiveOrError(): Promise<Result<number, never>> {
+        return this.getPrimitive()
+            .then(response => ({ status: "success", response }) as Success<number>)
+            .catch((e: any) => {
+                if (e == null || e.body == null) {
+                    throw e;
+                }
                 throw e;
-            }
-            throw e;
-        }
+            });
     }
 }
