@@ -16,30 +16,59 @@ export interface ITestService {
      *
      */
     getFileSystems(): Promise<{ [key: string]: IBackingFileSystem }>;
+    /**
+     * Returns a mapping from file system id to backing file system configuration.
+     *
+     */
+    getFileSystemsOrError(): Promise<{ status: "success", response: { [key: string]: IBackingFileSystem } }>;
     createDataset(request: ICreateDatasetRequest, testHeaderArg: string): Promise<IDataset>;
+    createDatasetOrError(request: ICreateDatasetRequest, testHeaderArg: string): Promise<{ status: "success", response: IDataset }>;
     getDataset(datasetRid: string): Promise<IDataset | null>;
+    getDatasetOrError(datasetRid: string): Promise<{ status: "success", response: IDataset | null }>;
     getRawData(datasetRid: string): Promise<ReadableStream<Uint8Array>>;
+    getRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> }>;
     getAliasedRawData(datasetRid: string): Promise<ReadableStream<Uint8Array>>;
+    getAliasedRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> }>;
     maybeGetRawData(datasetRid: string): Promise<ReadableStream<Uint8Array> | null>;
+    maybeGetRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> | null }>;
     getAliasedString(datasetRid: string): Promise<string>;
+    getAliasedStringOrError(datasetRid: string): Promise<{ status: "success", response: string }>;
     uploadRawData(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<void>;
+    uploadRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void }>;
     uploadAliasedRawData(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<void>;
+    uploadAliasedRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void }>;
     getBranches(datasetRid: string): Promise<Array<string>>;
+    getBranchesOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> }>;
     /**
      * Gets all branches of this dataset.
      *
      * @deprecated use getBranches instead
      */
     getBranchesDeprecated(datasetRid: string): Promise<Array<string>>;
+    /**
+     * Gets all branches of this dataset.
+     *
+     * @deprecated use getBranches instead
+     */
+    getBranchesDeprecatedOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> }>;
     resolveBranch(datasetRid: string, branch: string): Promise<string | null>;
+    resolveBranchOrError(datasetRid: string, branch: string): Promise<{ status: "success", response: string | null }>;
     testParam(datasetRid: string): Promise<string | null>;
+    testParamOrError(datasetRid: string): Promise<{ status: "success", response: string | null }>;
     testQueryParams(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<number>;
+    testQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: number }>;
     testNoResponseQueryParams(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<void>;
+    testNoResponseQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: void }>;
     testBoolean(): Promise<boolean>;
+    testBooleanOrError(): Promise<{ status: "success", response: boolean }>;
     testDouble(): Promise<number | "NaN">;
+    testDoubleOrError(): Promise<{ status: "success", response: number | "NaN" }>;
     testInteger(): Promise<number>;
+    testIntegerOrError(): Promise<{ status: "success", response: number }>;
     testPostOptional(maybeString?: string | null): Promise<string | null>;
+    testPostOptionalOrError(maybeString?: string | null): Promise<{ status: "success", response: string | null }>;
     testOptionalIntegerAndDouble(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<void>;
+    testOptionalIntegerAndDoubleOrError(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<{ status: "success", response: void }>;
 }
 
 export class TestService {
@@ -65,6 +94,21 @@ export class TestService {
         );
     }
 
+    /**
+     * Returns a mapping from file system id to backing file system configuration.
+     *
+     */
+    public async getFileSystemsOrError(): Promise<{ status: "success", response: { [key: string]: IBackingFileSystem } }> {
+        try {
+            return { status: "success", response: await this.getFileSystems() }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
+    }
+
     public createDataset(request: ICreateDatasetRequest, testHeaderArg: string): Promise<IDataset> {
         return this.bridge.call<IDataset>(
             "TestService",
@@ -80,6 +124,17 @@ export class TestService {
             __undefined,
             __undefined
         );
+    }
+
+    public async createDatasetOrError(request: ICreateDatasetRequest, testHeaderArg: string): Promise<{ status: "success", response: IDataset }> {
+        try {
+            return { status: "success", response: await this.createDataset(request, testHeaderArg) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 
     public getDataset(datasetRid: string): Promise<IDataset | null> {
@@ -99,6 +154,17 @@ export class TestService {
         );
     }
 
+    public async getDatasetOrError(datasetRid: string): Promise<{ status: "success", response: IDataset | null }> {
+        try {
+            return { status: "success", response: await this.getDataset(datasetRid) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
+    }
+
     public getRawData(datasetRid: string): Promise<ReadableStream<Uint8Array>> {
         return this.bridge.call<ReadableStream<Uint8Array>>(
             "TestService",
@@ -114,6 +180,17 @@ export class TestService {
             __undefined,
             "application/octet-stream"
         );
+    }
+
+    public async getRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> }> {
+        try {
+            return { status: "success", response: await this.getRawData(datasetRid) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 
     public getAliasedRawData(datasetRid: string): Promise<ReadableStream<Uint8Array>> {
@@ -133,6 +210,17 @@ export class TestService {
         );
     }
 
+    public async getAliasedRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> }> {
+        try {
+            return { status: "success", response: await this.getAliasedRawData(datasetRid) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
+    }
+
     public maybeGetRawData(datasetRid: string): Promise<ReadableStream<Uint8Array> | null> {
         return this.bridge.call<ReadableStream<Uint8Array> | null>(
             "TestService",
@@ -148,6 +236,17 @@ export class TestService {
             __undefined,
             "application/octet-stream"
         );
+    }
+
+    public async maybeGetRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> | null }> {
+        try {
+            return { status: "success", response: await this.maybeGetRawData(datasetRid) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 
     public getAliasedString(datasetRid: string): Promise<string> {
@@ -167,6 +266,17 @@ export class TestService {
         );
     }
 
+    public async getAliasedStringOrError(datasetRid: string): Promise<{ status: "success", response: string }> {
+        try {
+            return { status: "success", response: await this.getAliasedString(datasetRid) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
+    }
+
     public uploadRawData(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<void> {
         return this.bridge.call<void>(
             "TestService",
@@ -180,6 +290,17 @@ export class TestService {
             "application/octet-stream",
             __undefined
         );
+    }
+
+    public async uploadRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void }> {
+        try {
+            return { status: "success", response: await this.uploadRawData(input) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 
     public uploadAliasedRawData(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<void> {
@@ -197,6 +318,17 @@ export class TestService {
         );
     }
 
+    public async uploadAliasedRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void }> {
+        try {
+            return { status: "success", response: await this.uploadAliasedRawData(input) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
+    }
+
     public getBranches(datasetRid: string): Promise<Array<string>> {
         return this.bridge.call<Array<string>>(
             "TestService",
@@ -212,6 +344,17 @@ export class TestService {
             __undefined,
             __undefined
         );
+    }
+
+    public async getBranchesOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> }> {
+        try {
+            return { status: "success", response: await this.getBranches(datasetRid) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -236,6 +379,22 @@ export class TestService {
         );
     }
 
+    /**
+     * Gets all branches of this dataset.
+     *
+     * @deprecated use getBranches instead
+     */
+    public async getBranchesDeprecatedOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> }> {
+        try {
+            return { status: "success", response: await this.getBranchesDeprecated(datasetRid) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
+    }
+
     public resolveBranch(datasetRid: string, branch: string): Promise<string | null> {
         return this.bridge.call<string | null>(
             "TestService",
@@ -255,6 +414,17 @@ export class TestService {
         );
     }
 
+    public async resolveBranchOrError(datasetRid: string, branch: string): Promise<{ status: "success", response: string | null }> {
+        try {
+            return { status: "success", response: await this.resolveBranch(datasetRid, branch) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
+    }
+
     public testParam(datasetRid: string): Promise<string | null> {
         return this.bridge.call<string | null>(
             "TestService",
@@ -270,6 +440,17 @@ export class TestService {
             __undefined,
             __undefined
         );
+    }
+
+    public async testParamOrError(datasetRid: string): Promise<{ status: "success", response: string | null }> {
+        try {
+            return { status: "success", response: await this.testParam(datasetRid) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 
     public testQueryParams(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<number> {
@@ -297,6 +478,17 @@ export class TestService {
         );
     }
 
+    public async testQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: number }> {
+        try {
+            return { status: "success", response: await this.testQueryParams(query, something, implicit, setEnd, optionalMiddle, optionalEnd) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
+    }
+
     public testNoResponseQueryParams(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<void> {
         return this.bridge.call<void>(
             "TestService",
@@ -322,6 +514,17 @@ export class TestService {
         );
     }
 
+    public async testNoResponseQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: void }> {
+        try {
+            return { status: "success", response: await this.testNoResponseQueryParams(query, something, implicit, setEnd, optionalMiddle, optionalEnd) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
+    }
+
     public testBoolean(): Promise<boolean> {
         return this.bridge.call<boolean>(
             "TestService",
@@ -335,6 +538,17 @@ export class TestService {
             __undefined,
             __undefined
         );
+    }
+
+    public async testBooleanOrError(): Promise<{ status: "success", response: boolean }> {
+        try {
+            return { status: "success", response: await this.testBoolean() }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 
     public testDouble(): Promise<number | "NaN"> {
@@ -352,6 +566,17 @@ export class TestService {
         );
     }
 
+    public async testDoubleOrError(): Promise<{ status: "success", response: number | "NaN" }> {
+        try {
+            return { status: "success", response: await this.testDouble() }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
+    }
+
     public testInteger(): Promise<number> {
         return this.bridge.call<number>(
             "TestService",
@@ -367,6 +592,17 @@ export class TestService {
         );
     }
 
+    public async testIntegerOrError(): Promise<{ status: "success", response: number }> {
+        try {
+            return { status: "success", response: await this.testInteger() }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
+    }
+
     public testPostOptional(maybeString?: string | null): Promise<string | null> {
         return this.bridge.call<string | null>(
             "TestService",
@@ -380,6 +616,17 @@ export class TestService {
             __undefined,
             __undefined
         );
+    }
+
+    public async testPostOptionalOrError(maybeString?: string | null): Promise<{ status: "success", response: string | null }> {
+        try {
+            return { status: "success", response: await this.testPostOptional(maybeString) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 
     public testOptionalIntegerAndDouble(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<void> {
@@ -399,5 +646,16 @@ export class TestService {
             __undefined,
             __undefined
         );
+    }
+
+    public async testOptionalIntegerAndDoubleOrError(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<{ status: "success", response: void }> {
+        try {
+            return { status: "success", response: await this.testOptionalIntegerAndDouble(maybeInteger, maybeDouble) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 }

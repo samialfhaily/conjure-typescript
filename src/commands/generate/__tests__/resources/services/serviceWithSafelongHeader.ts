@@ -5,6 +5,7 @@ const __undefined: undefined = undefined;
 
 export interface IServiceWithSafelongHeader {
     foo(investigation: number): Promise<void>;
+    fooOrError(investigation: number): Promise<{ status: "success", response: void }>;
 }
 
 export class ServiceWithSafelongHeader {
@@ -26,5 +27,16 @@ export class ServiceWithSafelongHeader {
             __undefined,
             __undefined
         );
+    }
+
+    public async fooOrError(investigation: number): Promise<{ status: "success", response: void }> {
+        try {
+            return { status: "success", response: await this.foo(investigation) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 }

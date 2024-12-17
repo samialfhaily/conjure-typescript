@@ -5,6 +5,7 @@ const __undefined: undefined = undefined;
 
 export interface IParamTypeService {
     foo(body: string, header: string, path: string, query: string): Promise<void>;
+    fooOrError(body: string, header: string, path: string, query: string): Promise<{ status: "success", response: void }>;
 }
 
 export class ParamTypeService {
@@ -30,5 +31,16 @@ export class ParamTypeService {
             __undefined,
             __undefined
         );
+    }
+
+    public async fooOrError(body: string, header: string, path: string, query: string): Promise<{ status: "success", response: void }> {
+        try {
+            return { status: "success", response: await this.foo(body, header, path, query) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 }

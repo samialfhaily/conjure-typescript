@@ -24,6 +24,7 @@ import { generateService } from "../serviceGenerator";
 import { SimpleAst } from "../simpleAst";
 import { generateEnum } from "../typeGenerator";
 import { DEFAULT_TYPE_GENERATION_FLAGS } from "./resources/constants";
+import { createHashableTypeName } from "../utils";
 
 describe("simpleAst", () => {
     let outDir: string;
@@ -62,7 +63,15 @@ describe("simpleAst", () => {
                             type: "primitive",
                         },
                         tags: [],
-                        errors: [],
+                        errors: [
+                            {
+                                error: {
+                                    name: "MyError",
+                                    package: "com.palantir.package1",
+                                    namespace: "Metadata",
+                                },
+                            },
+                        ],
                     },
                 ],
                 serviceName: {
@@ -70,7 +79,15 @@ describe("simpleAst", () => {
                     package: "com.palantir.package2",
                 },
             },
-            new Map(),
+            new Map([
+                [
+                    createHashableTypeName({ name: "MyError", package: "com.palantir.package1" }),
+                    {
+                        type: "object",
+                        object: { typeName: { name: "MyError", package: "com.palantir.package1" }, fields: [] },
+                    },
+                ],
+            ]),
             simpleAst,
             DEFAULT_TYPE_GENERATION_FLAGS,
         );

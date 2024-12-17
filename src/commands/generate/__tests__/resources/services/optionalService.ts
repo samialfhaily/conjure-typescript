@@ -5,6 +5,7 @@ const __undefined: undefined = undefined;
 
 export interface IOptionalService {
     foo(header: string, name?: string | null): Promise<void>;
+    fooOrError(header: string, name?: string | null): Promise<{ status: "success", response: void }>;
 }
 
 export class OptionalService {
@@ -28,5 +29,16 @@ export class OptionalService {
             __undefined,
             __undefined
         );
+    }
+
+    public async fooOrError(header: string, name?: string | null): Promise<{ status: "success", response: void }> {
+        try {
+            return { status: "success", response: await this.foo(header, name) }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 }

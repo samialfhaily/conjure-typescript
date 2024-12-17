@@ -518,6 +518,8 @@ describe("serviceGenerator", () => {
 export interface IMyService {
     /** endpoint level docs */
     foo(): Promise<void>;
+    /** endpoint level docs */
+    fooOrError(): Promise<{ status: "success", response: void }>;
 }
 `,
         );
@@ -556,6 +558,8 @@ export interface IMyService {
 export interface IMyService {
     /** @incubating */
     foo(): Promise<void>;
+    /** @incubating */
+    fooOrError(): Promise<{ status: "success", response: void }>;
 }
 `,
         );
@@ -588,7 +592,22 @@ export interface IMyService {
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
             },
-            new Map(),
+            new Map([
+                [
+                    createHashableTypeName({ name: "MyError1", package: "com.palantir.services" }),
+                    {
+                        type: "object",
+                        object: { typeName: { name: "MyError1", package: "com.palantir.services" }, fields: [] },
+                    },
+                ],
+                [
+                    createHashableTypeName({ name: "MyError2", package: "com.palantir.services" }),
+                    {
+                        type: "object",
+                        object: { typeName: { name: "MyError2", package: "com.palantir.services" }, fields: [] },
+                    },
+                ],
+            ]),
             simpleAst,
             DEFAULT_TYPE_GENERATION_FLAGS,
         );
@@ -599,10 +618,12 @@ export interface IMyService {
 export interface IMyService {
     /**
      * endpoint level docs
-     * @throws {MyError1} MyError1 documentation
-     * @throws {MyError2} MyError2 documentation
+     * @throws {IMyError1} MyError1 documentation
+     * @throws {IMyError2} MyError2 documentation
      */
     foo(): Promise<void>;
+    /** endpoint level docs */
+    fooOrError(): Promise<{ status: "success", response: void } | { status: "failure", error: IMyError1 | IMyError2 }>;
 }
 `,
         );
@@ -631,7 +652,15 @@ export interface IMyService {
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
             },
-            new Map(),
+            new Map([
+                [
+                    createHashableTypeName({ name: "MyError", package: "com.palantir.services" }),
+                    {
+                        type: "object",
+                        object: { typeName: { name: "MyError", package: "com.palantir.services" }, fields: [] },
+                    },
+                ],
+            ]),
             simpleAst,
             DEFAULT_TYPE_GENERATION_FLAGS,
         );
@@ -643,9 +672,14 @@ export interface IMyService {
     /**
      * endpoint level docs
      * @incubating
-     * @throws {MyError} MyError documentation
+     * @throws {IMyError} MyError documentation
      */
     foo(): Promise<void>;
+    /**
+     * endpoint level docs
+     * @incubating
+     */
+    fooOrError(): Promise<{ status: "success", response: void } | { status: "failure", error: IMyError }>;
 }
 `,
         );
@@ -688,6 +722,11 @@ export interface IMyService {
      * @incubating
      */
     foo(): Promise<void>;
+    /**
+     * @deprecated to be replaced
+     * @incubating
+     */
+    fooOrError(): Promise<{ status: "success", response: void }>;
 }
 `,
         );

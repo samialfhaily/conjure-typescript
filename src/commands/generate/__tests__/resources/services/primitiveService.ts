@@ -5,6 +5,7 @@ const __undefined: undefined = undefined;
 
 export interface IPrimitiveService {
     getPrimitive(): Promise<number>;
+    getPrimitiveOrError(): Promise<{ status: "success", response: number }>;
 }
 
 export class PrimitiveService {
@@ -24,5 +25,16 @@ export class PrimitiveService {
             __undefined,
             __undefined
         );
+    }
+
+    public async getPrimitiveOrError(): Promise<{ status: "success", response: number }> {
+        try {
+            return { status: "success", response: await this.getPrimitive() }
+        } catch (e: any) {
+            if (e == null || e.body == null) {
+                throw e;
+            }
+            throw e;
+        }
     }
 }
