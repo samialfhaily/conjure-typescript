@@ -23,8 +23,8 @@ import { generateError } from "../errorGenerator";
 import { generateService } from "../serviceGenerator";
 import { SimpleAst } from "../simpleAst";
 import { generateEnum } from "../typeGenerator";
-import { DEFAULT_TYPE_GENERATION_FLAGS } from "./resources/constants";
 import { createHashableTypeName } from "../utils";
+import { DEFAULT_TYPE_GENERATION_FLAGS } from "./resources/constants";
 
 describe("simpleAst", () => {
     let outDir: string;
