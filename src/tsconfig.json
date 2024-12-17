@@ -5,7 +5,7 @@
         "jsx": "react",
         "lib": [
             "dom",
-            "es2015",
+            "ES2015",
             "es5",
         ],
         "module": "commonjs",
