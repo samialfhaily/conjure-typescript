@@ -4,9 +4,8 @@
         "experimentalDecorators": true,
         "jsx": "react",
         "lib": [
-            "DOM",
-            "ES6",
-            "ES5",
+            "dom",
+            "es6",
         ],
         "module": "commonjs",
         "moduleResolution": "node",
