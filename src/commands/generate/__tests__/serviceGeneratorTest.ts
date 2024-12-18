@@ -519,7 +519,7 @@ export interface IMyService {
     /** endpoint level docs */
     foo(): Promise<void>;
     /** endpoint level docs */
-    fooOrError(): Promise<{ status: "success", response: void } | { status: "failure", error: never }>;
+    fooOrError(): Promise<Result<void, never>>;
 }
 `,
         );
@@ -559,7 +559,7 @@ export interface IMyService {
     /** @incubating */
     foo(): Promise<void>;
     /** @incubating */
-    fooOrError(): Promise<{ status: "success", response: void } | { status: "failure", error: never }>;
+    fooOrError(): Promise<Result<void, never>>;
 }
 `,
         );
@@ -623,7 +623,7 @@ export interface IMyService {
      */
     foo(): Promise<void>;
     /** endpoint level docs */
-    fooOrError(): Promise<{ status: "success", response: void } | { status: "failure", error: IMyError1 | IMyError2 }>;
+    fooOrError(): Promise<Result<void, IMyError1 | IMyError2>>;
 }
 `,
         );
@@ -679,7 +679,7 @@ export interface IMyService {
      * endpoint level docs
      * @incubating
      */
-    fooOrError(): Promise<{ status: "success", response: void } | { status: "failure", error: IMyError }>;
+    fooOrError(): Promise<Result<void, IMyError>>;
 }
 `,
         );
@@ -726,7 +726,7 @@ export interface IMyService {
      * @deprecated to be replaced
      * @incubating
      */
-    fooOrError(): Promise<{ status: "success", response: void } | { status: "failure", error: never }>;
+    fooOrError(): Promise<Result<void, never>>;
 }
 `,
         );
@@ -823,7 +823,7 @@ export interface IMyService {
         const contents = fs.readFileSync(outFile, "utf8");
 
         expect(contents).toContain(`import type { IMyError } from "../errors/myError";
-import { IHttpApiBridge } from "conjure-client";
+import { Failure, IHttpApiBridge, Result, Success } from "conjure-client";
 
 /** Constant reference to \`undefined\` that we expect to get minified and therefore reduce total code size */
 const __undefined: undefined = undefined;

@@ -47,16 +47,29 @@ import { ITypeGenerationFlags } from "./typeGenerationFlags";
 import { addDeprecatedToDocs, addErrorsToDocs, addIncubatingToDocs, CONJURE_CLIENT } from "./utils";
 
 /** Type used in the generation of the service class. Expected to be provided by conjure-client */
+const FAILURE_TYPE = "Failure";
 const HTTP_API_BRIDGE_TYPE = "IHttpApiBridge";
+const RESULT_TYPE = "Result";
+const SUCCESS_TYPE = "Success";
 
 /** Variable name used in the generation of the service class. */
 const BRIDGE = "bridge";
 
 /** Default imports used in the generation of the service class. */
-const HTTP_API_BRIDGE_IMPORT: ImportDeclarationStructure = {
+const CONJURE_CLIENT_IMPORTS_WITH_FAILURE_TYPE: ImportDeclarationStructure = {
     kind: StructureKind.ImportDeclaration,
     moduleSpecifier: CONJURE_CLIENT,
-    namedImports: [{ name: HTTP_API_BRIDGE_TYPE }],
+    namedImports: [
+        { name: FAILURE_TYPE },
+        { name: HTTP_API_BRIDGE_TYPE },
+        { name: RESULT_TYPE },
+        { name: SUCCESS_TYPE },
+    ],
+};
+const CONJURE_CLIENT_IMPORTS_WITHOUT_FAILURE_TYPE: ImportDeclarationStructure = {
+    kind: StructureKind.ImportDeclaration,
+    moduleSpecifier: CONJURE_CLIENT,
+    namedImports: [{ name: HTTP_API_BRIDGE_TYPE }, { name: RESULT_TYPE }, { name: SUCCESS_TYPE }],
 };
 
 const UNDEFINED_CONSTANT = "__undefined";
@@ -79,7 +92,8 @@ export function generateService(
     const mediaTypeVisitor = new MediaTypeVisitor(knownTypes);
     const endpointSignatures: MethodSignatureStructure[] = [];
     const endpointImplementations: MethodDeclarationStructure[] = [];
-    const imports: ImportDeclarationStructure[] = [HTTP_API_BRIDGE_IMPORT];
+    const imports: ImportDeclarationStructure[] = [];
+    let throwsAtLeastOneError = false;
 
     sourceFile.addVariableStatement({
         declarationKind: VariableDeclarationKind.Const,
@@ -157,20 +171,17 @@ export function generateService(
         });
 
         const errorNames = endpointDefinition.errors?.map(error => `I${error.error.name}`) ?? [];
+        throwsAtLeastOneError = throwsAtLeastOneError || errorNames.length > 0;
+
         if (errorNames.length === 0) {
             errorNames.push("never");
         }
-
-        const returnType =
-            `{ status: "success", response: ${returnTsType} }` +
-            " | " +
-            `{ status: "failure", error: ${errorNames.join(" | ")} }`;
 
         endpointSignatures.push({
             kind: StructureKind.MethodSignature,
             name: `${endpointDefinition.endpointName}OrError`,
             parameters,
-            returnType: `Promise<${returnType}>`,
+            returnType: `Promise<Result<${returnTsType}, ${errorNames.join(" | ")}>>`,
             docs: docsWithoutThrownErrors != null ? [docsWithoutThrownErrors] : undefined,
         });
         endpointImplementations.push({
@@ -178,12 +189,16 @@ export function generateService(
             statements: generateEndpointOrErrorBody(endpointDefinition, parameters, returnTsType),
             name: `${endpointDefinition.endpointName}OrError`,
             parameters,
-            returnType: `Promise<${returnType}>`,
+            returnType: `Promise<Result<${returnTsType}, ${errorNames.join(" | ")}>>`,
             // this appears to be a no-op by ts-simple-ast, since default in typescript is public
             scope: Scope.Public,
             docs: docsWithoutThrownErrors != null ? [docsWithoutThrownErrors] : undefined,
         });
     });
+
+    imports.push(
+        throwsAtLeastOneError ? CONJURE_CLIENT_IMPORTS_WITH_FAILURE_TYPE : CONJURE_CLIENT_IMPORTS_WITHOUT_FAILURE_TYPE,
+    );
 
     sourceFile.addImportDeclarations(sortImports(imports));
 
@@ -322,9 +337,7 @@ function generateEndpointOrErrorBody(
 
         writer
             .writeLine(`return ${wrappedMethodCall}`)
-            .write(
-                `.then(response => ({ status: "success", response }) as { status: "success", response: ${returnTsType} })`,
-            );
+            .write(`.then(response => ({ status: "success", response }) as Success<${returnTsType}>)`);
 
         if (endpointDefinition.errors != null && endpointDefinition.errors.length > 0) {
             writer
@@ -335,9 +348,7 @@ function generateEndpointOrErrorBody(
             for (const error of endpointDefinition.errors) {
                 writer
                     .writeLine(`if (e.body.errorName === "${error.error.namespace}:${error.error.name}") {`)
-                    .writeLine(
-                        `return { status: "failure", error: e.body } as { status: "failure", error: I${error.error.name} };`,
-                    )
+                    .writeLine(`return { status: "failure", error: e.body } as Failure<I${error.error.name}>;`)
                     .writeLine("}");
             }
             writer.writeLine("throw e;").writeLine("});");
