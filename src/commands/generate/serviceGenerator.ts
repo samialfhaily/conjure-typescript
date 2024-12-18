@@ -137,6 +137,21 @@ export function generateService(
             scope: Scope.Public,
             docs: docs != null ? [docs] : undefined,
         });
+
+        endpointDefinition.errors?.forEach(error => {
+            imports.push(
+                ...IType.visit(
+                    {
+                        reference: {
+                            name: `${error.error.name}`,
+                            package: error.error.package,
+                        },
+                        type: "reference",
+                    },
+                    importsVisitor,
+                ),
+            );
+        });
     });
 
     if (imports.length !== 0) {

@@ -588,7 +588,28 @@ export interface IMyService {
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
             },
-            new Map(),
+            new Map([
+                [
+                    createHashableTypeName({
+                        name: "MyError1",
+                        package: "com.palantir.services",
+                    }),
+                    {
+                        type: "object",
+                        object: { typeName: { name: "MyError1", package: "com.palantir.services" }, fields: [] },
+                    },
+                ],
+                [
+                    createHashableTypeName({
+                        name: "MyError2",
+                        package: "com.palantir.services",
+                    }),
+                    {
+                        type: "object",
+                        object: { typeName: { name: "MyError2", package: "com.palantir.services" }, fields: [] },
+                    },
+                ],
+            ]),
             simpleAst,
             DEFAULT_TYPE_GENERATION_FLAGS,
         );
@@ -631,7 +652,18 @@ export interface IMyService {
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
             },
-            new Map(),
+            new Map([
+                [
+                    createHashableTypeName({
+                        name: "MyError",
+                        package: "com.palantir.services",
+                    }),
+                    {
+                        type: "object",
+                        object: { typeName: { name: "MyError", package: "com.palantir.services" }, fields: [] },
+                    },
+                ],
+            ]),
             simpleAst,
             DEFAULT_TYPE_GENERATION_FLAGS,
         );
