@@ -158,7 +158,7 @@ export function generateService(
         });
 
         const errorNames = endpointDefinition.errors?.map(error => `I${error.error.name}`) ?? [];
-        if (errorNames.length == 0) {
+        if (errorNames.length === 0) {
             errorNames.push("never");
         }
 
