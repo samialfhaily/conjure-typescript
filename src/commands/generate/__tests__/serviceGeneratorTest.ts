@@ -654,14 +654,11 @@ export interface IMyService {
             },
             new Map([
                 [
-<<<<<<< HEAD
                     createHashableTypeName({ name: "MyError", package: "com.palantir.services" }),
-=======
                     createHashableTypeName({
                         name: "MyError",
                         package: "com.palantir.services",
                     }),
->>>>>>> sami/fix-error-types-in-docs
                     {
                         type: "object",
                         object: { typeName: { name: "MyError", package: "com.palantir.services" }, fields: [] },
