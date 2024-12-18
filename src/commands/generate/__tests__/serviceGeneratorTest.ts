@@ -599,8 +599,8 @@ export interface IMyService {
 export interface IMyService {
     /**
      * endpoint level docs
-     * @throws {MyError1} MyError1 documentation
-     * @throws {MyError2} MyError2 documentation
+     * @throws {IMyError1} MyError1 documentation
+     * @throws {IMyError2} MyError2 documentation
      */
     foo(): Promise<void>;
 }
@@ -643,7 +643,7 @@ export interface IMyService {
     /**
      * endpoint level docs
      * @incubating
-     * @throws {MyError} MyError documentation
+     * @throws {IMyError} MyError documentation
      */
     foo(): Promise<void>;
 }
