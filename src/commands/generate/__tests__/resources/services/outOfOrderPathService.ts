@@ -5,7 +5,7 @@ const __undefined: undefined = undefined;
 
 export interface IOutOfOrderPathService {
     foo(param1: string, param2: string): Promise<void>;
-    fooOrError(param1: string, param2: string): Promise<{ status: "success", response: void }>;
+    fooOrError(param1: string, param2: string): Promise<{ status: "success", response: void } | { status: "failure", error: never }>;
 }
 
 export class OutOfOrderPathService {
@@ -31,7 +31,7 @@ export class OutOfOrderPathService {
         );
     }
 
-    public fooOrError(param1: string, param2: string): Promise<{ status: "success", response: void }> {
+    public fooOrError(param1: string, param2: string): Promise<{ status: "success", response: void } | { status: "failure", error: never }> {
         return this.foo(param1, param2)
             .then(response => ({ status: "success", response }) as { status: "success", response: void })
             .catch((e: any) => {

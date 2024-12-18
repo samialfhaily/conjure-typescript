@@ -5,7 +5,7 @@ const __undefined: undefined = undefined;
 
 export interface IServiceWithSafelongHeader {
     foo(investigation: number): Promise<void>;
-    fooOrError(investigation: number): Promise<{ status: "success", response: void }>;
+    fooOrError(investigation: number): Promise<{ status: "success", response: void } | { status: "failure", error: never }>;
 }
 
 export class ServiceWithSafelongHeader {
@@ -29,7 +29,7 @@ export class ServiceWithSafelongHeader {
         );
     }
 
-    public fooOrError(investigation: number): Promise<{ status: "success", response: void }> {
+    public fooOrError(investigation: number): Promise<{ status: "success", response: void } | { status: "failure", error: never }> {
         return this.foo(investigation)
             .then(response => ({ status: "success", response }) as { status: "success", response: void })
             .catch((e: any) => {

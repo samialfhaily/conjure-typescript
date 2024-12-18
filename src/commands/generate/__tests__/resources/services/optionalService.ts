@@ -5,7 +5,7 @@ const __undefined: undefined = undefined;
 
 export interface IOptionalService {
     foo(header: string, name?: string | null): Promise<void>;
-    fooOrError(header: string, name?: string | null): Promise<{ status: "success", response: void }>;
+    fooOrError(header: string, name?: string | null): Promise<{ status: "success", response: void } | { status: "failure", error: never }>;
 }
 
 export class OptionalService {
@@ -31,7 +31,7 @@ export class OptionalService {
         );
     }
 
-    public fooOrError(header: string, name?: string | null): Promise<{ status: "success", response: void }> {
+    public fooOrError(header: string, name?: string | null): Promise<{ status: "success", response: void } | { status: "failure", error: never }> {
         return this.foo(header, name)
             .then(response => ({ status: "success", response }) as { status: "success", response: void })
             .catch((e: any) => {

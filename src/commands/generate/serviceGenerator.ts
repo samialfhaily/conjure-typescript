@@ -157,19 +157,20 @@ export function generateService(
         });
 
         const errorNames = endpointDefinition.errors?.map(error => `I${error.error.name}`) ?? [];
-
-        const returnTypes: string[] = [];
-
-        returnTypes.push(`{ status: "success", response: ${returnTsType} }`);
-        if (errorNames.length > 0) {
-            returnTypes.push(`{ status: "failure", error: ${errorNames.join(" | ")} }`);
+        if (errorNames.length == 0) {
+            errorNames.push("never");
         }
+
+        const returnType =
+            `{ status: "success", response: ${returnTsType} }` +
+            " | " +
+            `{ status: "failure", error: ${errorNames.join(" | ")} }`;
 
         endpointSignatures.push({
             kind: StructureKind.MethodSignature,
             name: `${endpointDefinition.endpointName}OrError`,
             parameters,
-            returnType: `Promise<${returnTypes.join(" | ")}>`,
+            returnType: `Promise<${returnType}>`,
             docs: docsWithoutThrownErrors != null ? [docsWithoutThrownErrors] : undefined,
         });
         endpointImplementations.push({
@@ -177,7 +178,7 @@ export function generateService(
             statements: generateEndpointOrErrorBody(endpointDefinition, parameters, returnTsType),
             name: `${endpointDefinition.endpointName}OrError`,
             parameters,
-            returnType: `Promise<${returnTypes.join(" | ")}>`,
+            returnType: `Promise<${returnType}>`,
             // this appears to be a no-op by ts-simple-ast, since default in typescript is public
             scope: Scope.Public,
             docs: docsWithoutThrownErrors != null ? [docsWithoutThrownErrors] : undefined,
@@ -321,14 +322,16 @@ function generateEndpointOrErrorBody(
 
         writer
             .writeLine(`return ${wrappedMethodCall}`)
-            .writeLine(
+            .write(
                 `.then(response => ({ status: "success", response }) as { status: "success", response: ${returnTsType} })`,
-            )
-            .writeLine(".catch((e: any) => {")
-            .writeLine("if (e == null || e.body == null) {")
-            .writeLine("throw e;")
-            .writeLine("}");
+            );
+
         if (endpointDefinition.errors != null) {
+            writer
+                .writeLine(".catch((e: any) => {")
+                .writeLine("if (e == null || e.body == null) {")
+                .writeLine("throw e;")
+                .writeLine("}");
             for (const error of endpointDefinition.errors) {
                 writer
                     .writeLine(`if (e.body.errorName === "${error.error.namespace}:${error.error.name}") {`)
@@ -337,8 +340,10 @@ function generateEndpointOrErrorBody(
                     )
                     .writeLine("}");
             }
+            writer.writeLine("throw e;").writeLine("});");
+        } else {
+            writer.write(";");
         }
-        writer.writeLine("throw e;").writeLine("});");
     };
 }
 

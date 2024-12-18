@@ -21,25 +21,25 @@ export interface ITestService {
      * Returns a mapping from file system id to backing file system configuration.
      *
      */
-    getFileSystemsOrError(): Promise<{ status: "success", response: { [key: string]: IBackingFileSystem } }>;
+    getFileSystemsOrError(): Promise<{ status: "success", response: { [key: string]: IBackingFileSystem } } | { status: "failure", error: never }>;
     createDataset(request: ICreateDatasetRequest, testHeaderArg: string): Promise<IDataset>;
-    createDatasetOrError(request: ICreateDatasetRequest, testHeaderArg: string): Promise<{ status: "success", response: IDataset }>;
+    createDatasetOrError(request: ICreateDatasetRequest, testHeaderArg: string): Promise<{ status: "success", response: IDataset } | { status: "failure", error: never }>;
     getDataset(datasetRid: string): Promise<IDataset | null>;
-    getDatasetOrError(datasetRid: string): Promise<{ status: "success", response: IDataset | null }>;
+    getDatasetOrError(datasetRid: string): Promise<{ status: "success", response: IDataset | null } | { status: "failure", error: never }>;
     getRawData(datasetRid: string): Promise<ReadableStream<Uint8Array>>;
-    getRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> }>;
+    getRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> } | { status: "failure", error: never }>;
     getAliasedRawData(datasetRid: string): Promise<ReadableStream<Uint8Array>>;
-    getAliasedRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> }>;
+    getAliasedRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> } | { status: "failure", error: never }>;
     maybeGetRawData(datasetRid: string): Promise<ReadableStream<Uint8Array> | null>;
-    maybeGetRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> | null }>;
+    maybeGetRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> | null } | { status: "failure", error: never }>;
     getAliasedString(datasetRid: string): Promise<IAliasedString>;
-    getAliasedStringOrError(datasetRid: string): Promise<{ status: "success", response: IAliasedString }>;
+    getAliasedStringOrError(datasetRid: string): Promise<{ status: "success", response: IAliasedString } | { status: "failure", error: never }>;
     uploadRawData(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<void>;
-    uploadRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void }>;
+    uploadRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void } | { status: "failure", error: never }>;
     uploadAliasedRawData(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<void>;
-    uploadAliasedRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void }>;
+    uploadAliasedRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void } | { status: "failure", error: never }>;
     getBranches(datasetRid: string): Promise<Array<string>>;
-    getBranchesOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> }>;
+    getBranchesOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> } | { status: "failure", error: never }>;
     /**
      * Gets all branches of this dataset.
      *
@@ -51,25 +51,25 @@ export interface ITestService {
      *
      * @deprecated use getBranches instead
      */
-    getBranchesDeprecatedOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> }>;
+    getBranchesDeprecatedOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> } | { status: "failure", error: never }>;
     resolveBranch(datasetRid: string, branch: string): Promise<string | null>;
-    resolveBranchOrError(datasetRid: string, branch: string): Promise<{ status: "success", response: string | null }>;
+    resolveBranchOrError(datasetRid: string, branch: string): Promise<{ status: "success", response: string | null } | { status: "failure", error: never }>;
     testParam(datasetRid: string): Promise<string | null>;
-    testParamOrError(datasetRid: string): Promise<{ status: "success", response: string | null }>;
+    testParamOrError(datasetRid: string): Promise<{ status: "success", response: string | null } | { status: "failure", error: never }>;
     testQueryParams(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<number>;
-    testQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: number }>;
+    testQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: number } | { status: "failure", error: never }>;
     testNoResponseQueryParams(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<void>;
-    testNoResponseQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: void }>;
+    testNoResponseQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: void } | { status: "failure", error: never }>;
     testBoolean(): Promise<boolean>;
-    testBooleanOrError(): Promise<{ status: "success", response: boolean }>;
+    testBooleanOrError(): Promise<{ status: "success", response: boolean } | { status: "failure", error: never }>;
     testDouble(): Promise<number | "NaN">;
-    testDoubleOrError(): Promise<{ status: "success", response: number | "NaN" }>;
+    testDoubleOrError(): Promise<{ status: "success", response: number | "NaN" } | { status: "failure", error: never }>;
     testInteger(): Promise<number>;
-    testIntegerOrError(): Promise<{ status: "success", response: number }>;
+    testIntegerOrError(): Promise<{ status: "success", response: number } | { status: "failure", error: never }>;
     testPostOptional(maybeString?: string | null): Promise<string | null>;
-    testPostOptionalOrError(maybeString?: string | null): Promise<{ status: "success", response: string | null }>;
+    testPostOptionalOrError(maybeString?: string | null): Promise<{ status: "success", response: string | null } | { status: "failure", error: never }>;
     testOptionalIntegerAndDouble(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<void>;
-    testOptionalIntegerAndDoubleOrError(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<{ status: "success", response: void }>;
+    testOptionalIntegerAndDoubleOrError(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<{ status: "success", response: void } | { status: "failure", error: never }>;
 }
 
 export class TestService {
@@ -99,15 +99,9 @@ export class TestService {
      * Returns a mapping from file system id to backing file system configuration.
      *
      */
-    public getFileSystemsOrError(): Promise<{ status: "success", response: { [key: string]: IBackingFileSystem } }> {
+    public getFileSystemsOrError(): Promise<{ status: "success", response: { [key: string]: IBackingFileSystem } } | { status: "failure", error: never }> {
         return this.getFileSystems()
-            .then(response => ({ status: "success", response }) as { status: "success", response: { [key: string]: IBackingFileSystem } })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: { [key: string]: IBackingFileSystem } });
     }
 
     public createDataset(request: ICreateDatasetRequest, testHeaderArg: string): Promise<IDataset> {
@@ -127,15 +121,9 @@ export class TestService {
         );
     }
 
-    public createDatasetOrError(request: ICreateDatasetRequest, testHeaderArg: string): Promise<{ status: "success", response: IDataset }> {
+    public createDatasetOrError(request: ICreateDatasetRequest, testHeaderArg: string): Promise<{ status: "success", response: IDataset } | { status: "failure", error: never }> {
         return this.createDataset(request, testHeaderArg)
-            .then(response => ({ status: "success", response }) as { status: "success", response: IDataset })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: IDataset });
     }
 
     public getDataset(datasetRid: string): Promise<IDataset | null> {
@@ -155,15 +143,9 @@ export class TestService {
         );
     }
 
-    public getDatasetOrError(datasetRid: string): Promise<{ status: "success", response: IDataset | null }> {
+    public getDatasetOrError(datasetRid: string): Promise<{ status: "success", response: IDataset | null } | { status: "failure", error: never }> {
         return this.getDataset(datasetRid)
-            .then(response => ({ status: "success", response }) as { status: "success", response: IDataset | null })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: IDataset | null });
     }
 
     public getRawData(datasetRid: string): Promise<ReadableStream<Uint8Array>> {
@@ -183,15 +165,9 @@ export class TestService {
         );
     }
 
-    public getRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> }> {
+    public getRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> } | { status: "failure", error: never }> {
         return this.getRawData(datasetRid)
-            .then(response => ({ status: "success", response }) as { status: "success", response: ReadableStream<Uint8Array> })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: ReadableStream<Uint8Array> });
     }
 
     public getAliasedRawData(datasetRid: string): Promise<ReadableStream<Uint8Array>> {
@@ -211,15 +187,9 @@ export class TestService {
         );
     }
 
-    public getAliasedRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> }> {
+    public getAliasedRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> } | { status: "failure", error: never }> {
         return this.getAliasedRawData(datasetRid)
-            .then(response => ({ status: "success", response }) as { status: "success", response: ReadableStream<Uint8Array> })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: ReadableStream<Uint8Array> });
     }
 
     public maybeGetRawData(datasetRid: string): Promise<ReadableStream<Uint8Array> | null> {
@@ -239,15 +209,9 @@ export class TestService {
         );
     }
 
-    public maybeGetRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> | null }> {
+    public maybeGetRawDataOrError(datasetRid: string): Promise<{ status: "success", response: ReadableStream<Uint8Array> | null } | { status: "failure", error: never }> {
         return this.maybeGetRawData(datasetRid)
-            .then(response => ({ status: "success", response }) as { status: "success", response: ReadableStream<Uint8Array> | null })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: ReadableStream<Uint8Array> | null });
     }
 
     public getAliasedString(datasetRid: string): Promise<IAliasedString> {
@@ -267,15 +231,9 @@ export class TestService {
         );
     }
 
-    public getAliasedStringOrError(datasetRid: string): Promise<{ status: "success", response: IAliasedString }> {
+    public getAliasedStringOrError(datasetRid: string): Promise<{ status: "success", response: IAliasedString } | { status: "failure", error: never }> {
         return this.getAliasedString(datasetRid)
-            .then(response => ({ status: "success", response }) as { status: "success", response: IAliasedString })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: IAliasedString });
     }
 
     public uploadRawData(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<void> {
@@ -293,15 +251,9 @@ export class TestService {
         );
     }
 
-    public uploadRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void }> {
+    public uploadRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void } | { status: "failure", error: never }> {
         return this.uploadRawData(input)
-            .then(response => ({ status: "success", response }) as { status: "success", response: void })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: void });
     }
 
     public uploadAliasedRawData(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<void> {
@@ -319,15 +271,9 @@ export class TestService {
         );
     }
 
-    public uploadAliasedRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void }> {
+    public uploadAliasedRawDataOrError(input: ReadableStream<Uint8Array> | BufferSource | Blob): Promise<{ status: "success", response: void } | { status: "failure", error: never }> {
         return this.uploadAliasedRawData(input)
-            .then(response => ({ status: "success", response }) as { status: "success", response: void })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: void });
     }
 
     public getBranches(datasetRid: string): Promise<Array<string>> {
@@ -347,15 +293,9 @@ export class TestService {
         );
     }
 
-    public getBranchesOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> }> {
+    public getBranchesOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> } | { status: "failure", error: never }> {
         return this.getBranches(datasetRid)
-            .then(response => ({ status: "success", response }) as { status: "success", response: Array<string> })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: Array<string> });
     }
 
     /**
@@ -385,15 +325,9 @@ export class TestService {
      *
      * @deprecated use getBranches instead
      */
-    public getBranchesDeprecatedOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> }> {
+    public getBranchesDeprecatedOrError(datasetRid: string): Promise<{ status: "success", response: Array<string> } | { status: "failure", error: never }> {
         return this.getBranchesDeprecated(datasetRid)
-            .then(response => ({ status: "success", response }) as { status: "success", response: Array<string> })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: Array<string> });
     }
 
     public resolveBranch(datasetRid: string, branch: string): Promise<string | null> {
@@ -415,15 +349,9 @@ export class TestService {
         );
     }
 
-    public resolveBranchOrError(datasetRid: string, branch: string): Promise<{ status: "success", response: string | null }> {
+    public resolveBranchOrError(datasetRid: string, branch: string): Promise<{ status: "success", response: string | null } | { status: "failure", error: never }> {
         return this.resolveBranch(datasetRid, branch)
-            .then(response => ({ status: "success", response }) as { status: "success", response: string | null })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: string | null });
     }
 
     public testParam(datasetRid: string): Promise<string | null> {
@@ -443,15 +371,9 @@ export class TestService {
         );
     }
 
-    public testParamOrError(datasetRid: string): Promise<{ status: "success", response: string | null }> {
+    public testParamOrError(datasetRid: string): Promise<{ status: "success", response: string | null } | { status: "failure", error: never }> {
         return this.testParam(datasetRid)
-            .then(response => ({ status: "success", response }) as { status: "success", response: string | null })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: string | null });
     }
 
     public testQueryParams(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<number> {
@@ -479,15 +401,9 @@ export class TestService {
         );
     }
 
-    public testQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: number }> {
+    public testQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: number } | { status: "failure", error: never }> {
         return this.testQueryParams(query, something, implicit, setEnd, optionalMiddle, optionalEnd)
-            .then(response => ({ status: "success", response }) as { status: "success", response: number })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: number });
     }
 
     public testNoResponseQueryParams(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<void> {
@@ -515,15 +431,9 @@ export class TestService {
         );
     }
 
-    public testNoResponseQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: void }> {
+    public testNoResponseQueryParamsOrError(query: string, something: string, implicit: string, setEnd: Array<string>, optionalMiddle?: string | null, optionalEnd?: string | null): Promise<{ status: "success", response: void } | { status: "failure", error: never }> {
         return this.testNoResponseQueryParams(query, something, implicit, setEnd, optionalMiddle, optionalEnd)
-            .then(response => ({ status: "success", response }) as { status: "success", response: void })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: void });
     }
 
     public testBoolean(): Promise<boolean> {
@@ -541,15 +451,9 @@ export class TestService {
         );
     }
 
-    public testBooleanOrError(): Promise<{ status: "success", response: boolean }> {
+    public testBooleanOrError(): Promise<{ status: "success", response: boolean } | { status: "failure", error: never }> {
         return this.testBoolean()
-            .then(response => ({ status: "success", response }) as { status: "success", response: boolean })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: boolean });
     }
 
     public testDouble(): Promise<number | "NaN"> {
@@ -567,15 +471,9 @@ export class TestService {
         );
     }
 
-    public testDoubleOrError(): Promise<{ status: "success", response: number | "NaN" }> {
+    public testDoubleOrError(): Promise<{ status: "success", response: number | "NaN" } | { status: "failure", error: never }> {
         return this.testDouble()
-            .then(response => ({ status: "success", response }) as { status: "success", response: number | "NaN" })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: number | "NaN" });
     }
 
     public testInteger(): Promise<number> {
@@ -593,15 +491,9 @@ export class TestService {
         );
     }
 
-    public testIntegerOrError(): Promise<{ status: "success", response: number }> {
+    public testIntegerOrError(): Promise<{ status: "success", response: number } | { status: "failure", error: never }> {
         return this.testInteger()
-            .then(response => ({ status: "success", response }) as { status: "success", response: number })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: number });
     }
 
     public testPostOptional(maybeString?: string | null): Promise<string | null> {
@@ -619,15 +511,9 @@ export class TestService {
         );
     }
 
-    public testPostOptionalOrError(maybeString?: string | null): Promise<{ status: "success", response: string | null }> {
+    public testPostOptionalOrError(maybeString?: string | null): Promise<{ status: "success", response: string | null } | { status: "failure", error: never }> {
         return this.testPostOptional(maybeString)
-            .then(response => ({ status: "success", response }) as { status: "success", response: string | null })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: string | null });
     }
 
     public testOptionalIntegerAndDouble(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<void> {
@@ -649,14 +535,8 @@ export class TestService {
         );
     }
 
-    public testOptionalIntegerAndDoubleOrError(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<{ status: "success", response: void }> {
+    public testOptionalIntegerAndDoubleOrError(maybeInteger?: number | null, maybeDouble?: number | "NaN" | null): Promise<{ status: "success", response: void } | { status: "failure", error: never }> {
         return this.testOptionalIntegerAndDouble(maybeInteger, maybeDouble)
-            .then(response => ({ status: "success", response }) as { status: "success", response: void })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: void });
     }
 }
