@@ -183,6 +183,21 @@ export function generateService(
             scope: Scope.Public,
             docs: docsWithoutThrownErrors != null ? [docsWithoutThrownErrors] : undefined,
         });
+
+        endpointDefinition.errors?.forEach(error => {
+            imports.push(
+                ...IType.visit(
+                    {
+                        reference: {
+                            name: `${error.error.name}`,
+                            package: error.error.package,
+                        },
+                        type: "reference",
+                    },
+                    importsVisitor,
+                ),
+            );
+        });
     });
 
     sourceFile.addImportDeclarations(sortImports(imports));
