@@ -590,20 +590,14 @@ export interface IMyService {
             },
             new Map([
                 [
-                    createHashableTypeName({
-                        name: "MyError1",
-                        package: "com.palantir.services",
-                    }),
+                    createHashableTypeName({ name: "MyError1", package: "com.palantir.services" }),
                     {
                         type: "object",
                         object: { typeName: { name: "MyError1", package: "com.palantir.services" }, fields: [] },
                     },
                 ],
                 [
-                    createHashableTypeName({
-                        name: "MyError2",
-                        package: "com.palantir.services",
-                    }),
+                    createHashableTypeName({ name: "MyError2", package: "com.palantir.services" }),
                     {
                         type: "object",
                         object: { typeName: { name: "MyError2", package: "com.palantir.services" }, fields: [] },
@@ -654,10 +648,7 @@ export interface IMyService {
             },
             new Map([
                 [
-                    createHashableTypeName({
-                        name: "MyError",
-                        package: "com.palantir.services",
-                    }),
+                    createHashableTypeName({ name: "MyError", package: "com.palantir.services" }),
                     {
                         type: "object",
                         object: { typeName: { name: "MyError", package: "com.palantir.services" }, fields: [] },
@@ -802,10 +793,7 @@ export interface IMyService {
             },
             new Map([
                 [
-                    createHashableTypeName({
-                        name: "MyError",
-                        package: "com.palantir.errors",
-                    }),
+                    createHashableTypeName({ name: "MyError", package: "com.palantir.errors" }),
                     {
                         type: "object",
                         object: { typeName: { name: "MyError", package: "com.palantir.errors" }, fields: [] },

@@ -81,10 +81,7 @@ describe("simpleAst", () => {
             },
             new Map([
                 [
-                    createHashableTypeName({
-                        name: "MyError",
-                        package: "com.palantir.package1",
-                    }),
+                    createHashableTypeName({ name: "MyError", package: "com.palantir.package1" }),
                     {
                         type: "object",
                         object: { typeName: { name: "MyError", package: "com.palantir.package1" }, fields: [] },
