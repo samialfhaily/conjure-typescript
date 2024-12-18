@@ -588,7 +588,22 @@ export interface IMyService {
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
             },
-            new Map(),
+            new Map([
+                [
+                    createHashableTypeName({ name: "MyError1", package: "com.palantir.services" }),
+                    {
+                        type: "object",
+                        object: { typeName: { name: "MyError1", package: "com.palantir.services" }, fields: [] },
+                    },
+                ],
+                [
+                    createHashableTypeName({ name: "MyError2", package: "com.palantir.services" }),
+                    {
+                        type: "object",
+                        object: { typeName: { name: "MyError2", package: "com.palantir.services" }, fields: [] },
+                    },
+                ],
+            ]),
             simpleAst,
             DEFAULT_TYPE_GENERATION_FLAGS,
         );
@@ -599,8 +614,8 @@ export interface IMyService {
 export interface IMyService {
     /**
      * endpoint level docs
-     * @throws {MyError1} MyError1 documentation
-     * @throws {MyError2} MyError2 documentation
+     * @throws {IMyError1} MyError1 documentation
+     * @throws {IMyError2} MyError2 documentation
      */
     foo(): Promise<void>;
 }
@@ -631,7 +646,15 @@ export interface IMyService {
                 ],
                 serviceName: { name: "MyService", package: "com.palantir.services" },
             },
-            new Map(),
+            new Map([
+                [
+                    createHashableTypeName({ name: "MyError", package: "com.palantir.services" }),
+                    {
+                        type: "object",
+                        object: { typeName: { name: "MyError", package: "com.palantir.services" }, fields: [] },
+                    },
+                ],
+            ]),
             simpleAst,
             DEFAULT_TYPE_GENERATION_FLAGS,
         );
@@ -643,7 +666,7 @@ export interface IMyService {
     /**
      * endpoint level docs
      * @incubating
-     * @throws {MyError} MyError documentation
+     * @throws {IMyError} MyError documentation
      */
     foo(): Promise<void>;
 }
@@ -733,5 +756,61 @@ export interface IMyService {
             DEFAULT_TYPE_GENERATION_FLAGS,
         );
         assertOutputAndExpectedAreEqual(outDir, expectedDir, "services/optionalService.ts");
+    });
+
+    it("emits service with no duplicate error imports", async () => {
+        await generateService(
+            {
+                endpoints: [
+                    {
+                        args: [],
+                        endpointName: "foo",
+                        httpMethod: HttpMethod.GET,
+                        httpPath: "/foo",
+                        markers: [],
+                        tags: [],
+                        errors: [
+                            {
+                                error: { name: "MyError", namespace: "MyNamespace", package: "com.palantir.errors" },
+                            },
+                        ],
+                    },
+                    {
+                        args: [],
+                        endpointName: "bar",
+                        httpMethod: HttpMethod.GET,
+                        httpPath: "/bar",
+                        markers: [],
+                        tags: [],
+                        errors: [
+                            {
+                                error: { name: "MyError", namespace: "MyNamespace", package: "com.palantir.errors" },
+                            },
+                        ],
+                    },
+                ],
+                serviceName: { name: "MyService", package: "com.palantir.services" },
+            },
+            new Map([
+                [
+                    createHashableTypeName({ name: "MyError", package: "com.palantir.errors" }),
+                    {
+                        type: "object",
+                        object: { typeName: { name: "MyError", package: "com.palantir.errors" }, fields: [] },
+                    },
+                ],
+            ]),
+            simpleAst,
+            DEFAULT_TYPE_GENERATION_FLAGS,
+        );
+        const outFile = path.join(outDir, "services/myService.ts");
+        const contents = fs.readFileSync(outFile, "utf8");
+
+        expect(contents).toContain(`import type { IMyError } from "../errors/myError";
+import { IHttpApiBridge } from "conjure-client";
+
+/** Constant reference to \`undefined\` that we expect to get minified and therefore reduce total code size */
+const __undefined: undefined = undefined;
+`);
     });
 });

@@ -160,7 +160,7 @@ export function isFlavorizable(type: IType, flavorizedAliases: boolean): boolean
 }
 
 function formattedEndpointError(errorDefinition: IEndpointError): string {
-    let formattedString = `{${errorDefinition.error.name}}`;
+    let formattedString = `{I${errorDefinition.error.name}}`;
     if (errorDefinition.docs != null && errorDefinition.docs != null) {
         formattedString += ` ${errorDefinition.docs}`;
     }
