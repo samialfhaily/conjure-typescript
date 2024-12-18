@@ -140,6 +140,7 @@ export function generateService(
 
         endpointDefinition.errors?.forEach(error => {
             imports.push(
+                // TODO: Get rid of the visitor, because the type (reference) is already known
                 ...IType.visit(
                     {
                         reference: {
