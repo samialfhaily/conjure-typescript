@@ -53,7 +53,7 @@ const HTTP_API_BRIDGE_TYPE = "IHttpApiBridge";
 const BRIDGE = "bridge";
 
 /** Default imports used in the generation of the service class. */
-const DEFAULT_CONJURE_CLIENT_IMPORTS: ImportDeclarationStructure = {
+const HTTP_API_BRIDGE_IMPORT: ImportDeclarationStructure = {
     kind: StructureKind.ImportDeclaration,
     moduleSpecifier: CONJURE_CLIENT,
     namedImports: [{ name: HTTP_API_BRIDGE_TYPE }],
@@ -79,7 +79,7 @@ export function generateService(
     const mediaTypeVisitor = new MediaTypeVisitor(knownTypes);
     const endpointSignatures: MethodSignatureStructure[] = [];
     const endpointImplementations: MethodDeclarationStructure[] = [];
-    const imports: ImportDeclarationStructure[] = [DEFAULT_CONJURE_CLIENT_IMPORTS];
+    const imports: ImportDeclarationStructure[] = [HTTP_API_BRIDGE_IMPORT];
 
     sourceFile.addVariableStatement({
         declarationKind: VariableDeclarationKind.Const,
@@ -142,19 +142,18 @@ export function generateService(
 
         // Generate the orError methods
         endpointDefinition.errors?.forEach(error => {
-            imports.push(
-                // TODO: Get rid of the visitor, because the type (reference) is already known
-                ...IType.visit(
-                    {
-                        reference: {
-                            name: `${error.error.name}`,
-                            package: error.error.package,
-                        },
-                        type: "reference",
+            // TODO: Get rid of the visitor, because the type (reference) is already known
+            const errorImports: ImportDeclarationStructure[] = IType.visit(
+                {
+                    reference: {
+                        name: `${error.error.name}`,
+                        package: error.error.package,
                     },
-                    importsVisitor,
-                ),
-            );
+                    type: "reference",
+                },
+                importsVisitor,
+            ).map(i => ({ ...i, isTypeOnly: true }));
+            imports.push(...errorImports);
         });
 
         const errorNames = endpointDefinition.errors?.map(error => `I${error.error.name}`) ?? [];
@@ -183,21 +182,6 @@ export function generateService(
             // this appears to be a no-op by ts-simple-ast, since default in typescript is public
             scope: Scope.Public,
             docs: docsWithoutThrownErrors != null ? [docsWithoutThrownErrors] : undefined,
-        });
-
-        endpointDefinition.errors?.forEach(error => {
-            // TODO: Get rid of the visitor, because the type (reference) is already known
-            const errorImports: ImportDeclarationStructure[] = IType.visit(
-                {
-                    reference: {
-                        name: `${error.error.name}`,
-                        package: error.error.package,
-                    },
-                    type: "reference",
-                },
-                importsVisitor,
-            ).map(i => ({ ...i, isTypeOnly: true }));
-            imports.push(...errorImports);
         });
     });
 
