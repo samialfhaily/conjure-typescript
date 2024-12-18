@@ -33,12 +33,6 @@ export class OutOfOrderPathService {
 
     public fooOrError(param1: string, param2: string): Promise<{ status: "success", response: void } | { status: "failure", error: never }> {
         return this.foo(param1, param2)
-            .then(response => ({ status: "success", response }) as { status: "success", response: void })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: void });
     }
 }

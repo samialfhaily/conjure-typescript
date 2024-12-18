@@ -326,7 +326,7 @@ function generateEndpointOrErrorBody(
                 `.then(response => ({ status: "success", response }) as { status: "success", response: ${returnTsType} })`,
             );
 
-        if (endpointDefinition.errors != null) {
+        if (endpointDefinition.errors != null && endpointDefinition.errors.length > 0) {
             writer
                 .writeLine(".catch((e: any) => {")
                 .writeLine("if (e == null || e.body == null) {")

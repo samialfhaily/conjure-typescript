@@ -33,12 +33,6 @@ export class OptionalService {
 
     public fooOrError(header: string, name?: string | null): Promise<{ status: "success", response: void } | { status: "failure", error: never }> {
         return this.foo(header, name)
-            .then(response => ({ status: "success", response }) as { status: "success", response: void })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: void });
     }
 }

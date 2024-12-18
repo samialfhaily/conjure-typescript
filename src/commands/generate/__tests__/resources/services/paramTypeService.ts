@@ -35,12 +35,6 @@ export class ParamTypeService {
 
     public fooOrError(body: string, header: string, path: string, query: string): Promise<{ status: "success", response: void } | { status: "failure", error: never }> {
         return this.foo(body, header, path, query)
-            .then(response => ({ status: "success", response }) as { status: "success", response: void })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: void });
     }
 }

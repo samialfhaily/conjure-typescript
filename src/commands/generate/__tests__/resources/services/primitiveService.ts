@@ -29,12 +29,6 @@ export class PrimitiveService {
 
     public getPrimitiveOrError(): Promise<{ status: "success", response: number } | { status: "failure", error: never }> {
         return this.getPrimitive()
-            .then(response => ({ status: "success", response }) as { status: "success", response: number })
-            .catch((e: any) => {
-                if (e == null || e.body == null) {
-                    throw e;
-                }
-                throw e;
-            });
+            .then(response => ({ status: "success", response }) as { status: "success", response: number });
     }
 }
