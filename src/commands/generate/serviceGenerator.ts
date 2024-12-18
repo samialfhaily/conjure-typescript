@@ -337,7 +337,7 @@ function generateEndpointOrErrorBody(
                 writer
                     .writeLine(`if (e.body.errorName === "${error.error.namespace}:${error.error.name}") {`)
                     .writeLine(
-                        `return { "status": "failure", "error": e.body } as { status: "failure", error: I${error.error.name} };`,
+                        `return { status: "failure", "error": e.body } as { status: "failure", error: I${error.error.name} };`,
                     )
                     .writeLine("}");
             }
