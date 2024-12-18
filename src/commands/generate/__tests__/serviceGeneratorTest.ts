@@ -519,7 +519,7 @@ export interface IMyService {
     /** endpoint level docs */
     foo(): Promise<void>;
     /** endpoint level docs */
-    fooOrError(): Promise<Result<void, never>>;
+    fooOrError(): Promise<{ status: "success", response: void }>;
 }
 `,
         );
@@ -559,7 +559,7 @@ export interface IMyService {
     /** @incubating */
     foo(): Promise<void>;
     /** @incubating */
-    fooOrError(): Promise<Result<void, never>>;
+    fooOrError(): Promise<{ status: "success", response: void }>;
 }
 `,
         );
@@ -623,7 +623,7 @@ export interface IMyService {
      */
     foo(): Promise<void>;
     /** endpoint level docs */
-    fooOrError(): Promise<Result<void, IMyError1 | IMyError2>>;
+    fooOrError(): Promise<{ status: "success", response: void } | { status: "failure", error: IMyError1 | IMyError2 }>;
 }
 `,
         );
@@ -679,7 +679,7 @@ export interface IMyService {
      * endpoint level docs
      * @incubating
      */
-    fooOrError(): Promise<Result<void, IMyError>>;
+    fooOrError(): Promise<{ status: "success", response: void } | { status: "failure", error: IMyError }>;
 }
 `,
         );
@@ -726,7 +726,7 @@ export interface IMyService {
      * @deprecated to be replaced
      * @incubating
      */
-    fooOrError(): Promise<Result<void, never>>;
+    fooOrError(): Promise<{ status: "success", response: void }>;
 }
 `,
         );

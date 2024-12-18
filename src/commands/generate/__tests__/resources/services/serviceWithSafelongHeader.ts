@@ -1,11 +1,11 @@
-import { IHttpApiBridge, Result, Success } from "conjure-client";
+import { IHttpApiBridge } from "conjure-client";
 
 /** Constant reference to `undefined` that we expect to get minified and therefore reduce total code size */
 const __undefined: undefined = undefined;
 
 export interface IServiceWithSafelongHeader {
     foo(investigation: number): Promise<void>;
-    fooOrError(investigation: number): Promise<Result<void, never>>;
+    fooOrError(investigation: number): Promise<{ status: "success", response: void }>;
 }
 
 export class ServiceWithSafelongHeader {
@@ -29,9 +29,9 @@ export class ServiceWithSafelongHeader {
         );
     }
 
-    public fooOrError(investigation: number): Promise<Result<void, never>> {
+    public fooOrError(investigation: number): Promise<{ status: "success", response: void }> {
         return this.foo(investigation)
-            .then(response => ({ status: "success", response }) as Success<void>)
+            .then(response => ({ status: "success", response }) as { status: "success", response: void })
             .catch((e: any) => {
                 if (e == null || e.body == null) {
                     throw e;

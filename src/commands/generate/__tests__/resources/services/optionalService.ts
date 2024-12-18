@@ -1,11 +1,11 @@
-import { IHttpApiBridge, Result, Success, Failure } from "conjure-client";
+import { IHttpApiBridge } from "conjure-client";
 
 /** Constant reference to `undefined` that we expect to get minified and therefore reduce total code size */
 const __undefined: undefined = undefined;
 
 export interface IOptionalService {
     foo(header: string, name?: string | null): Promise<void>;
-    fooOrError(header: string, name?: string | null): Promise<Result<void, never>>;
+    fooOrError(header: string, name?: string | null): Promise<{ status: "success", response: void }>;
 }
 
 export class OptionalService {
@@ -31,9 +31,9 @@ export class OptionalService {
         );
     }
 
-    public fooOrError(header: string, name?: string | null): Promise<Result<void, never>> {
+    public fooOrError(header: string, name?: string | null): Promise<{ status: "success", response: void }> {
         return this.foo(header, name)
-            .then(response => ({ status: "success", response }) as Success<void>)
+            .then(response => ({ status: "success", response }) as { status: "success", response: void })
             .catch((e: any) => {
                 if (e == null || e.body == null) {
                     throw e;
