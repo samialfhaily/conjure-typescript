@@ -37,7 +37,7 @@ import {
     StructureKind,
     VariableDeclarationKind,
 } from "ts-morph";
-import { ImportsVisitor, sortImports } from "./imports";
+import { combineImports, ImportsVisitor } from "./imports";
 import { MediaTypeVisitor } from "./mediaTypeVisitor";
 import { SimpleAst } from "./simpleAst";
 import { StringConversionTypeVisitor } from "./stringConversionTypeVisitor";
@@ -63,7 +63,7 @@ export function generateService(
     knownTypes: Map<string, ITypeDefinition>,
     simpleAst: SimpleAst,
     typeGenerationFlags: ITypeGenerationFlags,
-): Promise<void> {
+) {
     const sourceFile = simpleAst.createSourceFile(definition.serviceName);
     const tsReturnTypeVisitor = new TsReturnTypeVisitor(knownTypes, definition.serviceName, true, typeGenerationFlags);
     const tsArgumentTypeVisitor = new TsArgumentTypeVisitor(
@@ -78,11 +78,15 @@ export function generateService(
     const endpointSignatures: MethodSignatureStructure[] = [];
     const endpointImplementations: MethodDeclarationStructure[] = [];
     const imports: ImportDeclarationStructure[] = [HTTP_API_BRIDGE_IMPORT];
-    sourceFile.addVariableStatement({
-        declarationKind: VariableDeclarationKind.Const,
-        docs: ["Constant reference to `undefined` that we expect to get minified and therefore reduce total code size"],
-        declarations: [{ name: UNDEFINED_CONSTANT, type: "undefined", initializer: "undefined" }],
-    });
+    if (sourceFile.getVariableDeclaration(UNDEFINED_CONSTANT) == null) {
+        sourceFile.addVariableStatement({
+            declarationKind: VariableDeclarationKind.Const,
+            docs: [
+                "Constant reference to `undefined` that we expect to get minified and therefore reduce total code size",
+            ],
+            declarations: [{ name: UNDEFINED_CONSTANT, type: "undefined", initializer: "undefined" }],
+        });
+    }
     definition.endpoints.forEach(endpointDefinition => {
         const parameters: ParameterDeclarationStructure[] = endpointDefinition.args
             .sort((a, b) => {
@@ -155,7 +159,7 @@ export function generateService(
     });
 
     if (imports.length !== 0) {
-        sourceFile.addImportDeclarations(sortImports(imports));
+        combineImports(sourceFile, imports);
     }
 
     const iface = sourceFile.addInterface({
@@ -183,9 +187,6 @@ export function generateService(
         methods: endpointImplementations,
         name: definition.serviceName.name,
     });
-
-    sourceFile.formatText();
-    return sourceFile.save();
 }
 
 function generateEndpointBody(

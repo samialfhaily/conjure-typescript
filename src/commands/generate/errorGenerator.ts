@@ -17,7 +17,7 @@
 
 import { IErrorDefinition, IType, ITypeDefinition } from "conjure-api";
 import { ImportDeclarationStructure } from "ts-morph";
-import { ImportsVisitor, sortImports } from "./imports";
+import { combineImports, ImportsVisitor } from "./imports";
 import { SimpleAst } from "./simpleAst";
 import { TsReturnTypeVisitor } from "./tsReturnTypeVisitor";
 import { ITypeGenerationFlags } from "./typeGenerationFlags";
@@ -43,7 +43,7 @@ export function generateError(
     }, "");
 
     if (imports.length !== 0) {
-        sourceFile.addImportDeclarations(sortImports(imports));
+        combineImports(sourceFile, imports);
     }
 
     sourceFile.addInterface({

@@ -73,13 +73,13 @@ export async function generate(
     const simpleAst = new SimpleAst(outDir);
 
     definition.services.forEach(serviceDefinition =>
-        promises.push(generateService(serviceDefinition, knownTypes, simpleAst, typeGenerationFlags)),
+        generateService(serviceDefinition, knownTypes, simpleAst, typeGenerationFlags),
     );
     definition.types.forEach(typeDefinition =>
-        promises.push(generateType(typeDefinition, knownTypes, simpleAst, typeGenerationFlags)),
+        generateType(typeDefinition, knownTypes, simpleAst, typeGenerationFlags),
     );
     definition.errors.forEach(errorDefinition =>
-        promises.push(generateError(errorDefinition, knownTypes, simpleAst, typeGenerationFlags)),
+        generateError(errorDefinition, knownTypes, simpleAst, typeGenerationFlags),
     );
 
     promises.push(simpleAst.generateIndexFiles());

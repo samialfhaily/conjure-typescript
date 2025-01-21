@@ -26,6 +26,7 @@ const dashRegex = /-(\w)/g;
 export class SimpleAst {
     private ast: Project;
     private outDir: string;
+    private sourceFileByPackageName = new Map<string, SourceFile>();
 
     public constructor(outDir: string) {
         this.outDir = outDir;
@@ -38,10 +39,15 @@ export class SimpleAst {
     }
 
     public createSourceFile(currType: ITypeName): SourceFile {
-        return this.ast.createSourceFile(path.join(this.outDir, typeNameToFilePath(currType)));
+        let sourceFile = this.sourceFileByPackageName.get(currType.package);
+        if (sourceFile == null) {
+            sourceFile = this.ast.createSourceFile(path.join(this.outDir, dir(currType), "index.ts"));
+            this.sourceFileByPackageName.set(currType.package, sourceFile);
+        }
+        return sourceFile;
     }
 
-    public async generateIndexFiles(): Promise<void[]> {
+    public generateIndexFiles(): Promise<void[]> {
         const moduleTypes: Map<string, string[]> = new Map();
         this.ast.getSourceFiles().forEach(file => {
             const packageName = file.getDirectory().getBaseName();
@@ -51,11 +57,13 @@ export class SimpleAst {
 
         const rootIndex = this.ast.createSourceFile(path.join(this.outDir, "index.ts"));
         const moduleArray = Array.from(moduleTypes.entries());
-        const indexPromises = moduleArray.map(([packageName, types]) => {
-            const moduleIndex = this.ast.createSourceFile(path.join(this.outDir, packageName, "index.ts"));
-            moduleIndex.addExportDeclarations(types.map(type => ({ moduleSpecifier: `./${type}` })));
-            return moduleIndex.save();
+        const indexPromises = this.ast.getSourceFiles().map(file => {
+            file.formatText({ trimTrailingWhitespace: true });
+            return file.save();
         });
+
+        /* tslint:disable-next-line */
+        console.log("promises set");
 
         if (moduleArray.length === 1) {
             rootIndex.addExportDeclaration({ moduleSpecifier: `./${moduleArray[0][0]}` });
@@ -70,6 +78,8 @@ export class SimpleAst {
             });
         }
         indexPromises.push(rootIndex.save());
+
+        console.log("rootindex promise set");
 
         return Promise.all(indexPromises);
     }

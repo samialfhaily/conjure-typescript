@@ -28,7 +28,7 @@ import {
     PrimitiveType,
 } from "conjure-api";
 import * as path from "path";
-import { ImportDeclarationStructure, ImportSpecifierStructure, StructureKind } from "ts-morph";
+import { ImportDeclarationStructure, ImportSpecifierStructure, SourceFile, StructureKind } from "ts-morph";
 import { TsReturnTypeVisitor } from "./tsReturnTypeVisitor";
 import { ITypeGenerationFlags } from "./typeGenerationFlags";
 import { createHashableTypeName, isFlavorizable } from "./utils";
@@ -41,7 +41,7 @@ export class ImportsVisitor implements ITypeVisitor<ImportDeclarationStructure[]
         private currType: ITypeName,
         private typeGenerationFlags: ITypeGenerationFlags,
     ) {
-        this.tsTypeVisitor = new TsReturnTypeVisitor(knownTypes, currType, false, typeGenerationFlags);
+        this.tsTypeVisitor = new TsReturnTypeVisitor(knownTypes, currType, false, typeGenerationFlags, true);
     }
 
     public primitive = (_: PrimitiveType): ImportDeclarationStructure[] => [];
@@ -67,18 +67,20 @@ export class ImportsVisitor implements ITypeVisitor<ImportDeclarationStructure[]
             !isFlavorizable(typeDefinition.alias.alias, this.typeGenerationFlags.flavorizedAliases)
         ) {
             return IType.visit(typeDefinition.alias.alias, this);
-        } else if (obj.package === this.currType.package && obj.name === this.currType.name) {
+        } else if (obj.package === this.currType.package) {
             return [];
         }
         const moduleSpecifier = relativePath(this.currType, obj);
         const name = this.tsTypeVisitor.reference(obj);
+
         if (ITypeDefinition.isUnion(typeDefinition)) {
+            // assumes that union names are of the form IMyUnion.IMyUnion
+            const namePart = name.split(".")[0];
             return [
                 {
                     kind: StructureKind.ImportDeclaration,
                     moduleSpecifier,
-                    // assumes that union names are of the form IMyUnion.IMyUnion
-                    namespaceImport: name.split(".")[0],
+                    namedImports: [{ name: namePart, alias: getUniqueAlias(obj.package, namePart) }],
                 },
             ];
         }
@@ -87,7 +89,7 @@ export class ImportsVisitor implements ITypeVisitor<ImportDeclarationStructure[]
             {
                 kind: StructureKind.ImportDeclaration,
                 moduleSpecifier,
-                namedImports: [{ name }],
+                namedImports: [{ name, alias: getUniqueAlias(obj.package, name) }],
             },
         ];
     };
@@ -100,11 +102,8 @@ export class ImportsVisitor implements ITypeVisitor<ImportDeclarationStructure[]
 }
 
 function relativePath(currType: ITypeName, toType: ITypeName) {
-    if (currType.package === toType.package) {
-        return "./" + module(toType);
-    }
-    const relativeImport = path.relative(dir(currType), path.join(dir(toType), module(toType)));
-    return relativeImport.startsWith("../") ? relativeImport : "./" + relativeImport;
+    const relativeImport = path.relative(dir(currType), dir(toType));
+    return relativeImport;
 }
 
 export function dir(typeName: ITypeName) {
@@ -123,6 +122,7 @@ export function module(typeName: ITypeName) {
 export function sortImports(imports: ImportDeclarationStructure[]): ImportDeclarationStructure[] {
     const namedImports = new Map();
     const namespaceImports = new Map();
+    /* tslint:disable-next-line */
     imports.forEach(i => {
         const isNamedImport = i.namedImports != null;
         const isNamespaceImport = i.namespaceImport != null;
@@ -155,4 +155,25 @@ export function sortImports(imports: ImportDeclarationStructure[]): ImportDeclar
     return Array.from(namedImports.values())
         .concat(Array.from(namespaceImports.values()))
         .sort((a, b) => (a.moduleSpecifier < b.moduleSpecifier ? -1 : a.moduleSpecifier > b.moduleSpecifier ? 1 : 0));
+}
+
+export function getUniqueAlias(moduleSpecifier: string, name: string) {
+    const safeModuleSpecifier = moduleSpecifier.replace(/[^a-z0-9]/gi, "_");
+    return `__${safeModuleSpecifier}_${name}`;
+}
+
+export function combineImports(sourceFile: SourceFile, toAdd: ReadonlyArray<ImportDeclarationStructure>) {
+    for (const item of toAdd) {
+        const existing = sourceFile.getImportDeclaration(item.moduleSpecifier);
+        if (!existing) {
+            sourceFile.addImportDeclaration(item);
+        } else {
+            const named = new Set(existing.getNamedImports().map(v => v.getName()));
+            for (const entry of item.namedImports as ImportSpecifierStructure[]) {
+                if (!named.has(entry.name)) {
+                    existing.addNamedImport(entry);
+                }
+            }
+        }
+    }
 }

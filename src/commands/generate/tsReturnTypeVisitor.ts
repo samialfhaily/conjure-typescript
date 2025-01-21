@@ -29,6 +29,7 @@ import {
 } from "conjure-api";
 import { ITypeGenerationFlags } from "./typeGenerationFlags";
 import { createHashableTypeName, isFlavorizable } from "./utils";
+import { getUniqueAlias } from "./imports";
 
 export class TsReturnTypeVisitor implements ITypeVisitor<string> {
     constructor(
@@ -36,6 +37,7 @@ export class TsReturnTypeVisitor implements ITypeVisitor<string> {
         protected currType: ITypeName,
         protected isTopLevelBinary: boolean,
         protected typeGenerationFlags: ITypeGenerationFlags,
+        protected skipUniqueAliasStep = false,
     ) {}
 
     public primitive = (obj: PrimitiveType): string => {
@@ -94,6 +96,7 @@ export class TsReturnTypeVisitor implements ITypeVisitor<string> {
     public reference = (obj: ITypeName): string => {
         const typeDefinition = this.knownTypes.get(createHashableTypeName(obj));
         const withIPrefix = "I" + obj.name;
+        const skipAlias = this.skipUniqueAliasStep || this.currType.package === obj.package;
         if (typeDefinition == null) {
             throw new Error(`unknown reference type. package: '${obj.package}', name: '${obj.name}'`);
         } else if (
@@ -102,15 +105,15 @@ export class TsReturnTypeVisitor implements ITypeVisitor<string> {
         ) {
             return IType.visit(typeDefinition.alias.alias, this);
         } else if (ITypeDefinition.isEnum(typeDefinition)) {
-            return obj.name;
+            return skipAlias ? obj.name : getUniqueAlias(obj.package, obj.name);
         } else if (ITypeDefinition.isUnion(typeDefinition)) {
             // If the type reference is recursive, use a direct reference rather than a namespaced one
             if (obj.name === this.currType.name && obj.package === this.currType.package) {
                 return withIPrefix;
             }
-            return `${withIPrefix}.${withIPrefix}`;
+            return `${skipAlias ? withIPrefix : getUniqueAlias(obj.package, withIPrefix)}`;
         }
-        return withIPrefix;
+        return skipAlias ? withIPrefix : getUniqueAlias(obj.package, withIPrefix);
     };
     public external = (obj: IExternalReference): string => {
         return IType.visit(obj.fallback, this.nestedVisitor());

@@ -27,14 +27,13 @@ import {
     ImportDeclarationStructure,
     InterfaceDeclarationStructure,
     ModuleDeclarationKind,
-    ObjectLiteralExpression,
     PropertySignatureStructure,
     StructureKind,
     TypeAliasDeclarationStructure,
     VariableDeclarationKind,
     VariableStatementStructure,
 } from "ts-morph";
-import { ImportsVisitor, sortImports } from "./imports";
+import { combineImports, ImportsVisitor } from "./imports";
 import { SimpleAst } from "./simpleAst";
 import { TsReturnTypeVisitor } from "./tsReturnTypeVisitor";
 import { ITypeGenerationFlags } from "./typeGenerationFlags";
@@ -45,7 +44,7 @@ export function generateType(
     knownTypes: Map<string, ITypeDefinition>,
     simpleAst: SimpleAst,
     typeGenerationFlags: ITypeGenerationFlags,
-): Promise<void> {
+) {
     if (ITypeDefinition.isAlias(definition)) {
         return generateAlias(definition.alias, knownTypes, simpleAst, typeGenerationFlags);
     } else if (ITypeDefinition.isEnum(definition)) {
@@ -71,12 +70,12 @@ const FLAVOR_PACKAGE_FIELD = "__conjure_package";
  *  };
  * ```
  */
-export async function generateAlias(
+export function generateAlias(
     definition: IAliasDefinition,
     knownTypes: Map<string, ITypeDefinition>,
     simpleAst: SimpleAst,
     typeGenerationFlags: ITypeGenerationFlags,
-): Promise<void> {
+) {
     if (isFlavorizable(definition.alias, typeGenerationFlags.flavorizedAliases)) {
         const tsTypeVisitor = new TsReturnTypeVisitor(knownTypes, definition.typeName, false, typeGenerationFlags);
         const fieldType = IType.visit(definition.alias, tsTypeVisitor);
@@ -94,8 +93,6 @@ export async function generateAlias(
         if (definition.docs) {
             typeAlias.addJsDoc(definition.docs);
         }
-        sourceFile.formatText();
-        return sourceFile.save();
     }
 }
 
@@ -115,7 +112,7 @@ export async function generateAlias(
  * We do not use TypeScript Enums because they can not be assigned to an equivalent enum, making interop across
  * libraries more difficult
  */
-export async function generateEnum(definition: IEnumDefinition, simpleAst: SimpleAst): Promise<void> {
+export function generateEnum(definition: IEnumDefinition, simpleAst: SimpleAst) {
     const sourceFile = simpleAst.createSourceFile(definition.typeName);
 
     if (definition.values.length > 0) {
@@ -182,9 +179,6 @@ export async function generateEnum(definition: IEnumDefinition, simpleAst: Simpl
             type: "void",
         });
     }
-
-    sourceFile.formatText({ trimTrailingWhitespace: true });
-    return sourceFile.save();
 }
 
 /**
@@ -227,19 +221,18 @@ export async function generateObject(
 
     const sourceFile = simpleAst.createSourceFile(definition.typeName);
     if (imports.length !== 0) {
-        sourceFile.addImportDeclarations(sortImports(imports));
+        combineImports(sourceFile, imports);
     }
+
+    const typeName = `I${definition.typeName.name}`;
     const iface = sourceFile.addInterface({
         isExported: true,
-        name: "I" + definition.typeName.name,
+        name: typeName,
         properties,
     });
     if (definition.docs != null && definition.docs != null) {
         iface.addJsDoc({ description: definition.docs });
     }
-
-    sourceFile.formatText();
-    return sourceFile.save();
 }
 
 /** Variable name used in the generation of the union type visitor function. */
@@ -258,10 +251,12 @@ export async function generateUnion(
 
     const sourceFile = simpleAst.createSourceFile(definition.typeName);
     if (unionSourceFileInput.imports.length !== 0) {
-        sourceFile.addImportDeclarations(sortImports(unionSourceFileInput.imports));
+        combineImports(sourceFile, unionSourceFileInput.imports);
     }
+
+    const mod = sourceFile.addModule({ name: unionTsType, isExported: true });
     sourceFile.addInterfaces(unionSourceFileInput.memberInterfaces);
-    sourceFile.addFunctions(unionSourceFileInput.functions);
+    mod.addFunctions(unionSourceFileInput.functions);
 
     sourceFile.addTypeAlias({
         docs: definition.docs != null ? [{ description: definition.docs }] : undefined,
@@ -277,7 +272,7 @@ export async function generateUnion(
         typeParameters: [{ name: "T" }],
     });
 
-    sourceFile.addFunction({
+    mod.addFunction({
         statements: unionSourceFileInput.visitorStatements.join("\n"),
         name: "visit",
         parameters: [
@@ -292,30 +287,8 @@ export async function generateUnion(
         ],
         returnType: "T",
         typeParameters: [{ name: "T" }],
-    });
-
-    const variableStatement = sourceFile.addVariableStatement({
-        declarationKind: VariableDeclarationKind.Const,
-        declarations: [
-            {
-                initializer: "{}",
-                name: unionTsType,
-            },
-        ],
         isExported: true,
     });
-    const objectLiteralExpr = variableStatement.getDeclarations()[0].getInitializer() as ObjectLiteralExpression;
-    sourceFile.getFunctions().forEach(f => {
-        const name = f.getName();
-        if (name == null) throw new Error("Name == null! We assign the name above. This should never happen.");
-        objectLiteralExpr.addPropertyAssignment({
-            initializer: name,
-            name,
-        });
-    });
-
-    sourceFile.formatText();
-    return sourceFile.save();
 }
 
 function processUnionMembers(
@@ -371,6 +344,7 @@ function processUnionMembers(
                 },
             ],
             returnType: `obj is ${interfaceName}`,
+            isExported: true,
         };
         functions.push(typeGuard);
 
@@ -393,6 +367,7 @@ function processUnionMembers(
             returnType: interfaceName,
             // deprecate creation of deprecated types
             docs: fieldDefinition.deprecated != null ? [`@deprecated ${fieldDefinition.deprecated}`] : undefined,
+            isExported: true,
         });
 
         visitorProperties.push({
