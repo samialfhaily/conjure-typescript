@@ -27,9 +27,9 @@ import {
     ITypeVisitor,
     PrimitiveType,
 } from "conjure-api";
+import { getUniqueAlias } from "./imports";
 import { ITypeGenerationFlags } from "./typeGenerationFlags";
 import { createHashableTypeName, isFlavorizable } from "./utils";
-import { getUniqueAlias } from "./imports";
 
 export class TsReturnTypeVisitor implements ITypeVisitor<string> {
     constructor(

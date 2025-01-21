@@ -79,6 +79,7 @@ export class SimpleAst {
         }
         indexPromises.push(rootIndex.save());
 
+        /* tslint:disable-next-line */
         console.log("rootindex promise set");
 
         return Promise.all(indexPromises);
