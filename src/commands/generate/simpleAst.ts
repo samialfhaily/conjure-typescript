@@ -62,9 +62,6 @@ export class SimpleAst {
             return file.save();
         });
 
-        /* tslint:disable-next-line */
-        console.log("promises set");
-
         if (moduleArray.length === 1) {
             rootIndex.addExportDeclaration({ moduleSpecifier: `./${moduleArray[0][0]}` });
         } else {
@@ -78,9 +75,6 @@ export class SimpleAst {
             });
         }
         indexPromises.push(rootIndex.save());
-
-        /* tslint:disable-next-line */
-        console.log("rootindex promise set");
 
         return Promise.all(indexPromises);
     }

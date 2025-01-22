@@ -28,7 +28,7 @@ export function generateError(
     knownTypes: Map<string, ITypeDefinition>,
     simpleAst: SimpleAst,
     typeGenerationFlags: ITypeGenerationFlags,
-): Promise<void> {
+) {
     const sourceFile = simpleAst.createSourceFile(definition.errorName);
     const interfaceName = "I" + definition.errorName.name;
     const errorName = `${definition.namespace}:${definition.errorName.name}`;
@@ -85,7 +85,4 @@ export function generateError(
         ],
         returnType: `arg is ${interfaceName}`,
     });
-
-    sourceFile.formatText();
-    return sourceFile.save();
 }
