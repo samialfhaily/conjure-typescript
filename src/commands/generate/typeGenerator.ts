@@ -156,7 +156,7 @@ export function generateEnum(definition: IEnumDefinition, simpleAst: SimpleAst) 
         });
     } else {
         // We need to special case empty enums for two reasons:
-        // 1) `keyof typeof MyEnum` results in an erorr
+        // 1) `keyof typeof MyEnum` results in an error
         // 2) Typescript won't generate `const MyEnum = {}` and will instead just skip it from the compiled code.
         const variableStatement = sourceFile.addVariableStatement({
             declarationKind: VariableDeclarationKind.Const,
@@ -262,7 +262,10 @@ export async function generateUnion(
         docs: definition.docs != null ? [{ description: definition.docs }] : undefined,
         isExported: true,
         name: unionTsType,
-        type: unionSourceFileInput.memberInterfaces.map(iface => iface.name).join(" | "),
+        type:
+            unionSourceFileInput.memberInterfaces.length === 0
+                ? "unknown"
+                : unionSourceFileInput.memberInterfaces.map(iface => iface.name).join(" | "),
     });
 
     const visitorInterface = sourceFile.addInterface({
@@ -311,7 +314,7 @@ function processUnionMembers(
         const fieldType = IType.visit(fieldDefinition.type, tsTypeVisitor);
         imports.push(...IType.visit(fieldDefinition.type, importsVisitor));
 
-        const interfaceName = `${unionTsType}_${uppercase(memberName)}`;
+        const interfaceName = `${unionTsType}_${capitalize(memberName)}`;
         const docs = addDeprecatedToDocs(fieldDefinition);
 
         memberInterfaces.push({
@@ -336,7 +339,7 @@ function processUnionMembers(
         const typeGuard: FunctionDeclarationStructure = {
             kind: StructureKind.Function,
             statements: `return (obj.type === "${memberName}");`,
-            name: "is" + uppercase(memberName),
+            name: "is" + capitalize(memberName),
             parameters: [
                 {
                     name: "obj",
@@ -349,14 +352,13 @@ function processUnionMembers(
         functions.push(typeGuard);
 
         // factory
-        const factoryName = isValidFunctionName(memberName) ? memberName + "_" : memberName;
+        const factoryName = isValidFunctionName(memberName) ? memberName : `${memberName}_`;
         functions.push({
             kind: StructureKind.Function,
             statements: `return {
                 ${memberName}: obj,
                 type: ${doubleQuote(memberName)},
             };`,
-            // TODO(gracew): ensure that memberName is lowercase?
             name: factoryName,
             parameters: [
                 {
@@ -398,6 +400,6 @@ function processUnionMembers(
     };
 }
 
-function uppercase(value: string): string {
+function capitalize(value: string): string {
     return value.charAt(0).toUpperCase() + value.slice(1);
 }
