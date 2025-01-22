@@ -267,7 +267,10 @@ export async function generateUnion(
         docs: definition.docs != null ? [{ description: definition.docs }] : undefined,
         isExported: true,
         name: unionTsType,
-        type: unionSourceFileInput.memberInterfaces.map(iface => iface.name).join(" | "),
+        type:
+            unionSourceFileInput.memberInterfaces.length === 0
+                ? "unknown"
+                : unionSourceFileInput.memberInterfaces.map(iface => iface.name).join(" | "),
     });
 
     const visitorInterface = sourceFile.addInterface({
@@ -375,7 +378,7 @@ function processUnionMembers(
         functions.push(typeGuard);
 
         // factory
-        const factoryName = isValidFunctionName(memberName) ? memberName : memberName + "_";
+        const factoryName = isValidFunctionName(memberName) ? memberName : `${memberName}_`;
         functions.push({
             kind: StructureKind.Function,
             statements: `return {
