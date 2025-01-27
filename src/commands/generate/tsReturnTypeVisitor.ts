@@ -27,7 +27,7 @@ import {
     ITypeVisitor,
     PrimitiveType,
 } from "conjure-api";
-import { getUniqueAlias } from "./imports";
+import { module } from "./imports";
 import { ITypeGenerationFlags } from "./typeGenerationFlags";
 import { createHashableTypeName, isFlavorizable } from "./utils";
 
@@ -37,7 +37,6 @@ export class TsReturnTypeVisitor implements ITypeVisitor<string> {
         protected currType: ITypeName,
         protected isTopLevelBinary: boolean,
         protected typeGenerationFlags: ITypeGenerationFlags,
-        protected skipUniqueAliasStep = false,
     ) {}
 
     public primitive = (obj: PrimitiveType): string => {
@@ -68,6 +67,7 @@ export class TsReturnTypeVisitor implements ITypeVisitor<string> {
     public map = (obj: IMapType): string => {
         const valueTsType = IType.visit(obj.valueType, this.nestedVisitor());
         const maybeReadonly = this.typeGenerationFlags.readonlyInterfaces ? "readonly " : "";
+
         if (IType.isReference(obj.keyType)) {
             const keyTypeDefinition = this.knownTypes.get(createHashableTypeName(obj.keyType.reference));
             if (keyTypeDefinition != null) {
@@ -75,19 +75,23 @@ export class TsReturnTypeVisitor implements ITypeVisitor<string> {
                     if (obj.keyType.reference.package === this.currType.package) {
                         return `{ ${maybeReadonly}[key in ${obj.keyType.reference.name}]?: ${valueTsType} }`;
                     } else {
-                        return `{ ${maybeReadonly}[key in ${getUniqueAlias(
-                            obj.keyType.reference.package,
-                            obj.keyType.reference.name,
-                        )}]?: ${valueTsType} }`;
+                        const moduleSpecifier = module(obj.keyType.reference);
+                        return `{ ${maybeReadonly}[key in ${moduleSpecifier}.${obj.keyType.reference.name}]?: ${valueTsType} }`;
                     }
                 } else if (
                     ITypeDefinition.isAlias(keyTypeDefinition) &&
                     isFlavorizable(keyTypeDefinition.alias.alias, this.typeGenerationFlags.flavorizedAliases)
                 ) {
-                    return `{ ${maybeReadonly}[key: I${obj.keyType.reference.name}]: ${valueTsType} }`;
+                    if (obj.keyType.reference.package === this.currType.package) {
+                        return `{ ${maybeReadonly}[key: I${obj.keyType.reference.name}]: ${valueTsType} }`;
+                    } else {
+                        const moduleSpecifier = module(obj.keyType.reference);
+                        return `{ ${maybeReadonly}[key: ${moduleSpecifier}.I${obj.keyType.reference.name}]: ${valueTsType} }`;
+                    }
                 }
             }
         }
+
         return `{ ${maybeReadonly}[key: string]: ${valueTsType} }`;
     };
     public list = (obj: IListType): string => {
@@ -103,25 +107,23 @@ export class TsReturnTypeVisitor implements ITypeVisitor<string> {
     };
     public reference = (obj: ITypeName): string => {
         const typeDefinition = this.knownTypes.get(createHashableTypeName(obj));
-        const withIPrefix = "I" + obj.name;
-        const skipAlias = this.skipUniqueAliasStep || this.currType.package === obj.package;
+
         if (typeDefinition == null) {
             throw new Error(`unknown reference type. package: '${obj.package}', name: '${obj.name}'`);
-        } else if (
+        }
+
+        const typeName = ITypeDefinition.isEnum(typeDefinition) ? obj.name : "I" + obj.name;
+        const isSameModule = obj.package === this.currType.package;
+        const moduleSpecifier = module(obj);
+
+        if (
             ITypeDefinition.isAlias(typeDefinition) &&
             !isFlavorizable(typeDefinition.alias.alias, this.typeGenerationFlags.flavorizedAliases)
         ) {
             return IType.visit(typeDefinition.alias.alias, this);
-        } else if (ITypeDefinition.isEnum(typeDefinition)) {
-            return skipAlias ? obj.name : getUniqueAlias(obj.package, obj.name);
-        } else if (ITypeDefinition.isUnion(typeDefinition)) {
-            // If the type reference is recursive, use a direct reference rather than a namespaced one
-            if (obj.name === this.currType.name && obj.package === this.currType.package) {
-                return withIPrefix;
-            }
-            return `${skipAlias ? withIPrefix : getUniqueAlias(obj.package, withIPrefix)}`;
         }
-        return skipAlias ? withIPrefix : getUniqueAlias(obj.package, withIPrefix);
+
+        return isSameModule ? typeName : `${moduleSpecifier}.${typeName}`;
     };
     public external = (obj: IExternalReference): string => {
         return IType.visit(obj.fallback, this.nestedVisitor());

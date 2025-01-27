@@ -6,7 +6,6 @@
         "lib": [
             "dom",
             "es6",
-            "es5"
         ],
         "module": "commonjs",
         "moduleResolution": "node",
@@ -17,7 +16,7 @@
         "sourceMap": true,
         "strict": true,
         "stripInternal": true,
-        "target": "es5",
+        "target": "es6",
         "outDir": "../lib"
     },
     "exclude": [

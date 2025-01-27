@@ -28,21 +28,16 @@ import {
     PrimitiveType,
 } from "conjure-api";
 import * as path from "path";
-import { ImportDeclarationStructure, ImportSpecifierStructure, SourceFile, StructureKind } from "ts-morph";
-import { TsReturnTypeVisitor } from "./tsReturnTypeVisitor";
+import { ImportDeclarationStructure, SourceFile, StructureKind } from "ts-morph";
 import { ITypeGenerationFlags } from "./typeGenerationFlags";
 import { createHashableTypeName, isFlavorizable } from "./utils";
 
 export class ImportsVisitor implements ITypeVisitor<ImportDeclarationStructure[]> {
-    private tsTypeVisitor: TsReturnTypeVisitor;
-
     constructor(
         private knownTypes: Map<string, ITypeDefinition>,
         private currType: ITypeName,
         private typeGenerationFlags: ITypeGenerationFlags,
-    ) {
-        this.tsTypeVisitor = new TsReturnTypeVisitor(knownTypes, currType, false, typeGenerationFlags, true);
-    }
+    ) {}
 
     public primitive = (_: PrimitiveType): ImportDeclarationStructure[] => [];
 
@@ -59,37 +54,28 @@ export class ImportsVisitor implements ITypeVisitor<ImportDeclarationStructure[]
         return IType.visit(obj.itemType, this);
     };
     public reference = (obj: ITypeName): ImportDeclarationStructure[] => {
+        if (obj.package === this.currType.package) {
+            return [];
+        }
+
         const typeDefinition = this.knownTypes.get(createHashableTypeName(obj));
         if (typeDefinition == null) {
             throw new Error(`unknown reference type. package: '${obj.package}', name: '${obj.name}'`);
-        } else if (
+        }
+
+        if (
             ITypeDefinition.isAlias(typeDefinition) &&
             !isFlavorizable(typeDefinition.alias.alias, this.typeGenerationFlags.flavorizedAliases)
         ) {
             return IType.visit(typeDefinition.alias.alias, this);
-        } else if (obj.package === this.currType.package) {
-            return [];
-        }
-        const moduleSpecifier = relativePath(this.currType, obj);
-        const name = this.tsTypeVisitor.reference(obj);
-
-        if (ITypeDefinition.isUnion(typeDefinition)) {
-            // assumes that union names are of the form IMyUnion.IMyUnion
-            const namePart = name.split(".")[0];
-            return [
-                {
-                    kind: StructureKind.ImportDeclaration,
-                    moduleSpecifier,
-                    namedImports: [{ name: namePart, alias: getUniqueAlias(obj.package, namePart) }],
-                },
-            ];
         }
 
         return [
             {
                 kind: StructureKind.ImportDeclaration,
-                moduleSpecifier,
-                namedImports: [{ name, alias: getUniqueAlias(obj.package, name) }],
+                moduleSpecifier: relativePath(this.currType, obj),
+                namespaceImport: module(obj),
+                isTypeOnly: true,
             },
         ];
     };
@@ -114,66 +100,35 @@ export function dir(typeName: ITypeName) {
     return parts.slice(2).join("-");
 }
 
-/** Lowercases the name. */
+/** Pascal cases the name. */
 export function module(typeName: ITypeName) {
-    return typeName.name.charAt(0).toLowerCase() + typeName.name.slice(1);
+    const directoryName = dir(typeName);
+    const camelCaseModule = directoryName.replace(/-(\w)/g, x => x[1].toUpperCase());
+    return camelCaseModule.charAt(0).toUpperCase() + camelCaseModule.slice(1);
 }
 
 export function sortImports(imports: ImportDeclarationStructure[]): ImportDeclarationStructure[] {
-    const namedImports = new Map();
-    const namespaceImports = new Map();
-    /* tslint:disable-next-line */
+    const namespaceImports: Map<string, ImportDeclarationStructure> = new Map();
+
     imports.forEach(i => {
-        const isNamedImport = i.namedImports != null;
-        const isNamespaceImport = i.namespaceImport != null;
-        if (isNamedImport === isNamespaceImport) {
-            throw new Error("expected only one of the fields 'namedImports' and 'namespaceImport' to be defined");
-        }
-        if (isNamedImport) {
-            const curImport = namedImports.get(i.moduleSpecifier);
-            if (curImport != null && Array.isArray(i.namedImports)) {
-                const newImports = i.namedImports.filter(namedImport => {
-                    const newName = typeof namedImport === "string" ? namedImport : namedImport.name;
-                    return (
-                        curImport.namedImports.find(({ name }: ImportSpecifierStructure) => name === newName) == null
-                    );
-                });
-                curImport.namedImports.push(...newImports);
-            } else {
-                namedImports.set(i.moduleSpecifier, i);
-            }
-        } else if (isNamespaceImport) {
-            const curImport = namespaceImports.get(i.moduleSpecifier);
-            if (curImport != null && curImport.namespaceImport !== i.namespaceImport) {
-                throw new Error(`only one namespace import for module '${i.moduleSpecifier}' is permitted`);
-            } else {
-                namespaceImports.set(i.moduleSpecifier, i);
-            }
+        const existingImportDeclaration = namespaceImports.get(i.moduleSpecifier);
+        if (existingImportDeclaration != null && existingImportDeclaration.namespaceImport !== i.namespaceImport) {
+            throw new Error(`only one namespace import for module '${i.moduleSpecifier}' is permitted`);
+        } else {
+            namespaceImports.set(i.moduleSpecifier, i);
         }
     });
 
-    return Array.from(namedImports.values())
-        .concat(Array.from(namespaceImports.values()))
-        .sort((a, b) => (a.moduleSpecifier < b.moduleSpecifier ? -1 : a.moduleSpecifier > b.moduleSpecifier ? 1 : 0));
+    return Array.from(namespaceImports.values()).sort((a, b) =>
+        a.moduleSpecifier < b.moduleSpecifier ? -1 : a.moduleSpecifier > b.moduleSpecifier ? 1 : 0,
+    );
 }
 
-export function getUniqueAlias(moduleSpecifier: string, name: string) {
-    const safeModuleSpecifier = moduleSpecifier.replace(/[^a-z0-9]/gi, "_");
-    return `__${safeModuleSpecifier}_${name}`;
-}
-
-export function combineImports(sourceFile: SourceFile, toAdd: ReadonlyArray<ImportDeclarationStructure>) {
-    for (const item of toAdd) {
-        const existing = sourceFile.getImportDeclaration(item.moduleSpecifier);
-        if (!existing) {
-            sourceFile.addImportDeclaration(item);
-        } else {
-            const named = new Set(existing.getNamedImports().map(v => v.getName()));
-            for (const entry of item.namedImports as ImportSpecifierStructure[]) {
-                if (!named.has(entry.name)) {
-                    existing.addNamedImport(entry);
-                }
-            }
+export function combineImports(sourceFile: SourceFile, importDeclarations: ReadonlyArray<ImportDeclarationStructure>) {
+    for (const declaration of importDeclarations) {
+        const existingDeclaration = sourceFile.getImportDeclaration(declaration.moduleSpecifier);
+        if (existingDeclaration == null) {
+            sourceFile.addImportDeclaration(declaration);
         }
     }
 }
