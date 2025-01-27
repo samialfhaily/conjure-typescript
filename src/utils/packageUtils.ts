@@ -16,7 +16,7 @@
  */
 
 import * as fs from "fs-extra";
-import { IProductDependency } from "./slslDependencies";
+import { IProductDependency } from "./slsDependencies";
 
 export interface IPackageJson {
     author?: string;
