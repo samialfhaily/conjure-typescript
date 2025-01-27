@@ -64,6 +64,7 @@ export class TsReturnTypeVisitor implements ITypeVisitor<string> {
                 throw new Error("unknown primitive type");
         }
     };
+
     public map = (obj: IMapType): string => {
         const valueTsType = IType.visit(obj.valueType, this.nestedVisitor());
         const maybeReadonly = this.typeGenerationFlags.readonlyInterfaces ? "readonly " : "";
@@ -71,7 +72,14 @@ export class TsReturnTypeVisitor implements ITypeVisitor<string> {
             const keyTypeDefinition = this.knownTypes.get(createHashableTypeName(obj.keyType.reference));
             if (keyTypeDefinition != null) {
                 if (ITypeDefinition.isEnum(keyTypeDefinition)) {
-                    return `{ ${maybeReadonly}[key in ${obj.keyType.reference.name}]?: ${valueTsType} }`;
+                    if (obj.keyType.reference.package === this.currType.package) {
+                        return `{ ${maybeReadonly}[key in ${obj.keyType.reference.name}]?: ${valueTsType} }`;
+                    } else {
+                        return `{ ${maybeReadonly}[key in ${getUniqueAlias(
+                            obj.keyType.reference.package,
+                            obj.keyType.reference.name,
+                        )}]?: ${valueTsType} }`;
+                    }
                 } else if (
                     ITypeDefinition.isAlias(keyTypeDefinition) &&
                     isFlavorizable(keyTypeDefinition.alias.alias, this.typeGenerationFlags.flavorizedAliases)
